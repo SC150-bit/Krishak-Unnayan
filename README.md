@@ -13,7 +13,7 @@ knows their crop and location. Email sign-up/sign-in, gated behind a ₹30/month
   rendered with **Leaflet + OpenStreetMap tiles**, which are free and need no
   API key.
 - `data/users.json` — a flat-file "database" created automatically on first
-  signup. Fine for a demo; swap for Postgres/Mongo before going live.
+  signup.
 
 ## Setup
 
