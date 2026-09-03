@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.krishak.unnayan",
+    "sha256_cert_fingerprints": [
+      "0E:8E:E7:D2:3F:CD:FF:EE:1E:06:AC:48:F8:E2:A1:79:CF:1A:A8:55:70:C7:5A:4E:F2:5C:4C:81:71:EC:3B:D6"
+    ]
+  }
+}]
