@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Krishak Unnayan — Procurement Scheduling & Mandi Queue Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar__inner">
+    <a class="brand" href="#/">
+      <svg class="brand__mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 4C20 4 9 10 9 21C9 27.6274 13.9249 33 20 33C26.0751 33 31 27.6274 31 21C31 10 20 4 20 4Z" fill="#1F4D2C"/>
+        <path d="M20 33V37" stroke="#1F4D2C" stroke-width="2" stroke-linecap="round"/>
+        <path d="M20 12C20 12 14 15.5 14 21C14 24.3137 16.6863 27 20 27" stroke="#D98C2B" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span>Krishak Unnayan</span>
+    </a>
+    <nav class="topbar__nav" id="topNav">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+    <div class="topbar__actions" id="authActions">
+      <button class="btn btn--ghost" data-open-auth="login">Sign in</button>
+      <button class="btn btn--primary" data-open-auth="signup">Get started</button>
+    </div>
+    <div class="topbar__actions topbar__actions--user hidden" id="userActions">
+      <span class="user-chip" id="userChip"></span>
+      <button class="btn btn--ghost" id="signOutBtn">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main id="landing">
+  <section class="hero">
+    <div class="hero__copy">
+      <h1>Zero-Wait Mandi Procurement & Smart Queueing.</h1>
+      <p class="hero__sub">Book procurement slots in advance, avoid long mandi waiting times, track your queue status live, and find the highest paying market for your crop today.</p>
+      <div class="hero__cta">
+        <button class="btn btn--primary btn--lg" data-open-auth="signup">Book Slot Free</button>
+        <a class="btn btn--text" href="#how">See how it works ↓</a>
+      </div>
+      <dl class="hero__stats">
+        <div><dt>6</dt><dd>mandis tracked</dd></div>
+        <div><dt>0 Min</dt><dd>queue waiting with token</dd></div>
+        <div><dt>2 min</dt><dd>to book a slot</dd></div>
+      </dl>
+    </div>
+    <div class="hero__art" aria-hidden="true">
+      <svg viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="240" cy="240" r="230" fill="#F0F6EC"/>
+        <g stroke="#1F4D2C" stroke-width="6" stroke-linecap="round">
+          <path d="M200 360 L200 160"/>
+          <path d="M200 160 L176 128"/>
+          <path d="M200 160 L224 128"/>
+        </g>
+        <circle cx="360" cy="120" r="34" fill="#D98C2B"/>
+      </svg>
+    </div>
+  </section>
+
+  <section class="how" id="how">
+    <h2>Three steps to fast procurement</h2>
+    <ol class="steps">
+      <li>
+        <span class="steps__num">1</span>
+        <h3>Select Mandi & Book Slot</h3>
+        <p>Choose your nearest procurement center, preferred date, time slot, and estimated crop volume.</p>
+      </li>
+      <li>
+        <span class="steps__num">2</span>
+        <h3>Get Digital Token</h3>
+        <p>Receive a digital queue token with estimated time to arrive at the procurement gate.</p>
+      </li>
+      <li>
+        <span class="steps__num">3</span>
+        <h3>Live Queue Updates & SMS</h3>
+        <p>Track current serving tokens in real-time and receive SMS notifications before your turn.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="features" id="features">
+    <h2>Smart Procurement Solution</h2>
+    <div class="feature-grid">
+      <article class="feature-card">
+        <h3>Slot Booking System</h3>
+        <p>Eliminate random queueing by pre-booking scheduled procurement dates and times.</p>
+      </article>
+      <article class="feature-card">
+        <h3>Real-Time Queue Tracking</h3>
+        <p>Check live serving tokens and estimated remaining waiting times from your phone.</p>
+      </article>
+      <article class="feature-card">
+        <h3>SMS & App Alerts</h3>
+        <p>Get automated notification triggers when your token number is 15 minutes away.</p>
+      </article>
+      <article class="feature-card">
+        <h3>AI Assistant & Price Board</h3>
+        <p>Inquire about crop schedules and find net returns across neighboring markets.</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<main id="dashboard" class="dashboard hidden">
+  <div class="dashboard__grid">
+    <aside class="dashboard__side">
+      <div class="profile-card">
+        <div class="profile-card__avatar" id="avatarInitial"></div>
+        <div>
+          <h3 id="profileName"></h3>
+          <p id="profileMeta"></p>
+        </div>
+        <span class="badge" id="subBadge"></span>
+      </div>
+
+      <div class="paywall-card hidden" id="paywallCard">
+        <h4>Unlock Krishak Plus</h4>
+        <p>Get AI advisor & priority route optimization for ₹30/month.</p>
+        <button class="btn btn--primary" id="upgradeBtn">Upgrade for ₹30</button>
+      </div>
+
+      <nav class="dash-nav">
+        <button class="dash-nav__item is-active" data-panel="slot-booking">Book Slot</button>
+        <button class="dash-nav__item" data-panel="queue-tracker">Live Queue Status</button>
+        <button class="dash-nav__item" data-panel="markets">Best Markets</button>
+        <button class="dash-nav__item" data-panel="assistant">AI Assistant</button>
+      </nav>
+    </aside>
+
+    <section class="dashboard__main">
+
+      <!-- Panel 1: Slot Booking System -->
+      <div class="panel" id="panel-slot-booking">
+        <div class="panel__header">
+          <h2>Procurement Slot Booking</h2>
+        </div>
+        <p class="muted">Schedule your crop delivery in advance to avoid long gate queues.</p>
+        
+        <form id="bookingForm" class="booking-form">
+          <label>Select Mandi Center
+            <select id="bookMandi" required></select>
+          </label>
+          
+          <label>Delivery Date
+            <input type="date" id="bookDate" required />
+          </label>
+
+          <label>Time Slot
+            <select id="bookSlot" required>
+              <option value="08:00 AM - 10:00 AM">08:00 AM - 10:00 AM</option>
+              <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
+              <option value="12:00 PM - 02:00 PM">12:00 PM - 02:00 PM</option>
+              <option value="02:00 PM - 04:00 PM">02:00 PM - 04:00 PM</option>
+              <option value="04:00 PM - 06:00 PM">04:00 PM - 06:00 PM</option>
+            </select>
+          </label>
+
+          <label>Crop Type
+            <input type="text" id="bookCrop" placeholder="e.g. Wheat, Paddy" required />
+          </label>
+
+          <label>Estimated Quantity (Quintals)
+            <input type="number" id="bookQty" placeholder="e.g. 50" min="1" required />
+          </label>
+
+          <button class="btn btn--primary btn--lg" type="submit">Confirm Slot Booking</button>
+        </form>
+        <div id="bookingResult" class="booking-result hidden"></div>
+      </div>
+
+      <!-- Panel 2: Live Queue Management -->
+      <div class="panel hidden" id="panel-queue-tracker">
+        <div class="panel__header">
+          <h2>Live Mandi Queue & Token Tracking</h2>
+          <button class="btn btn--ghost btn--sm" id="refreshQueueBtn">Refresh Live Queue</button>
+        </div>
+        <p class="muted">Track live procurement gate status and estimated entry time.</p>
+        <div id="queueList" class="queue-list"></div>
+      </div>
+
+      <!-- Panel 3: Best Markets -->
+      <div class="panel hidden" id="panel-markets">
+        <div class="panel__header">
+          <h2>Best Markets for Your Harvest</h2>
+          <button class="btn btn--ghost btn--sm" id="locateBtn">Use My Location</button>
+        </div>
+        <div class="markets-layout">
+          <div id="map" class="map"></div>
+          <ol class="market-list" id="marketList"></ol>
+        </div>
+      </div>
+
+      <!-- Panel 4: AI Assistant -->
+      <div class="panel hidden" id="panel-assistant">
+        <div class="panel__header">
+          <h2>AI Agricultural & Procurement Advisor</h2>
+        </div>
+        <div class="chat" id="chatWindow"></div>
+        <form class="chat-form" id="chatForm">
+          <input type="text" id="chatInput" placeholder="Ask about procurement rules, timing, or crop quality…" autocomplete="off" />
+          <button class="btn btn--primary" type="submit">Send</button>
+        </form>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <span>Krishak Unnayan</span>
+  <span class="muted">Department of Consumer Affairs (DoCA) Procurement Automation Portal.</span>
+</footer>
+
+<div class="modal-backdrop hidden" id="authBackdrop">
+  <div class="modal">
+    <button class="modal__close" id="authClose" aria-label="Close">×</button>
+    <div class="modal__tabs">
+      <button class="modal__tab is-active" data-tab="login">Sign in</button>
+      <button class="modal__tab" data-tab="signup">Create account</button>
+    </div>
+
+    <form id="loginForm" class="modal__form">
+      <label>Email<input type="email" name="email" required /></label>
+      <label>Password<input type="password" name="password" required /></label>
+      <p class="form-error" id="loginError"></p>
+      <button class="btn btn--primary btn--lg" type="submit">Sign in</button>
+    </form>
+
+    <form id="signupForm" class="modal__form hidden">
+      <label>Full name<input type="text" name="name" required /></label>
+      <label>Email<input type="email" name="email" required /></label>
+      <label>Password<input type="password" name="password" minlength="6" required /></label>
+      <label>Village / town<input type="text" name="location" placeholder="e.g. Karnal, Haryana" /></label>
+      <label>Primary crops<input type="text" name="primaryCrops" placeholder="e.g. Wheat, Paddy" /></label>
+      <p class="form-error" id="signupError"></p>
+      <button class="btn btn--primary btn--lg" type="submit">Create account</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

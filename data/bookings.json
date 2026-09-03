@@ -1,0 +1,53 @@
+[
+  {
+    "id": "bk_101",
+    "userId": "user_1",
+    "mandiId": "mandi_karnal",
+    "mandiName": "Karnal Main Mandi",
+    "date": "2026-09-03",
+    "timeSlot": "09:00 AM - 11:00 AM",
+    "crop": "Wheat",
+    "quantityQuintals": 50,
+    "token": "KAR-042",
+    "createdAt": "2026-09-02T10:30:00.000Z",
+    "liveQueue": {
+      "currentServingToken": "KAR-038",
+      "tokensAhead": 4,
+      "estimatedWaitMins": 35,
+      "queueStatus": "Waiting"
+    }
+  },
+  {
+    "id": "bk_102",
+    "userId": "user_2",
+    "mandiId": "mandi_panipat",
+    "mandiName": "Panipat Grain Market",
+    "date": "2026-09-03",
+    "timeSlot": "07:00 AM - 09:00 AM",
+    "crop": "Paddy (Pusa 1121)",
+    "quantityQuintals": 80,
+    "token": "PAN-015",
+    "createdAt": "2026-09-02T14:15:00.000Z",
+    "liveQueue": {
+      "currentServingToken": "PAN-015",
+      "tokensAhead": 0,
+      "estimatedWaitMins": 0,
+      "queueStatus": "Now Serving"
+    }
+  },
+  {
+    "id": "bk_1788388930145",
+    "userId": "u_1788386237616_667735",
+    "userName": "Shreyash Chanda",
+    "mandiId": 1,
+    "mandiName": "Mandi Sector 4, Karnal",
+    "date": "2026-09-02",
+    "timeSlot": "08:00 AM - 10:00 AM",
+    "crop": "Wheat",
+    "quantityQuintals": 50,
+    "token": "TOK-MANDI-101",
+    "tokenNumber": 101,
+    "status": "CONFIRMED",
+    "createdAt": "2026-09-02T22:42:10.145Z"
+  }
+]
