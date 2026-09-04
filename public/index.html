@@ -19,31 +19,7 @@
     </script>
   </head>
   <body class="bg-slate-50 text-slate-900 font-sans antialiased">
-    <div id="root">
-      <!-- Chat Input Controls -->
-      <form id="chatForm" class="chat-form">
-        <div class="chat-input-container">
-          <button type="button" id="langToggleBtn" class="btn-lang">En ⇄ Regional</button>
-          <input type="text" id="chatInput" placeholder="Ask about procurement rules, timing, or crop quality..." />
-          <button type="button" id="micBtn" class="btn-mic" aria-label="Voice Input">🎙️</button>
-          <button type="submit" id="sendBtn">Send</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Verification Modal -->
-    <div id="verificationModal" class="modal-overlay hidden">
-      <div class="modal-card">
-        <h3>Identity Verification</h3>
-        <p>Please enter your 12-digit identification number for slot booking validation:</p>
-        <input type="text" id="idInput" maxlength="12" placeholder="Enter 12-digit ID" />
-        <div class="modal-actions">
-          <button type="button" id="closeModalBtn" class="btn-secondary">Cancel</button>
-          <button type="button" id="verifyBtn" class="btn-primary">Send OTP</button>
-        </div>
-      </div>
-    </div>
-
+    <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
