@@ -374,11 +374,37 @@ async function loadBestMarkets() {
 }
 
 // ------------------------------------------------------------------ AI chat
+// ------------------------------------------------------------------ AI chat
 const chatWindow = document.getElementById('chatWindow');
+
+function formatAIResponse(text) {
+  if (!text) return '';
+  return text
+    // Remove all '#' symbols anywhere in the string
+    .replace(/#/g, '')
+    
+    // Convert markdown bold (**word**) to HTML bold (<b>word</b>)
+    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+    
+    // Add clean line breaks before numbered points or inline headings
+    .replace(/(\d+\.\s+)/g, '<br><br>$1')
+    
+    // Clean up double line breaks at the start
+    .replace(/^(<br>)+/, '');
+}
+
 function addMsg(text, who) {
   const div = document.createElement('div');
   div.className = `chat-msg chat-msg--${who}`;
-  div.textContent = text;
+  
+  if (who === 'ai') {
+    // Render formatted HTML for AI messages
+    div.innerHTML = formatAIResponse(text);
+  } else {
+    // Render plain text for user messages
+    div.textContent = text;
+  }
+
   chatWindow.appendChild(div);
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
@@ -395,28 +421,9 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     return;
   }
 
-  function formatAIResponse(text) {
-  return text
-    // Remove all '#' symbols anywhere in the string
-    .replace(/#/g, '')
-    
-    // Convert markdown bold (**word**) to HTML bold (<b>word</b>)
-    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-    
-    // Add clean line breaks before numbered points or inline headings
-    .replace(/(\d+\.\s+)/g, '<br><br>$1')
-    
-    // Clean up double line breaks at the start
-    .replace(/^(<br>)+/, '');
-}
-
-// Example usage when setting element content
-chatBox.innerHTML = formatAIResponse(data.reply);
-   
-  
-
   addMsg(text, 'user');
   input.value = '';
+
   try {
     const { reply } = await api('/api/chat', {
       method: 'POST',
