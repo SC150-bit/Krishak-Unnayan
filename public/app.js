@@ -5,20 +5,10 @@ const state = {
   coords: { lat: 29.6857, lng: 76.9905 }, // default: Karnal, Haryana
   map: null,
   markers: [],
-  currentLang: 'en', // default language
+  currentLang: 'en',
 };
 
-// State-to-Language Mapping Table
-const REGIONAL_LANGUAGES = {
-  'Haryana': 'hi',       // Hindi
-  'Punjab': 'pa',        // Punjabi
-  'West Bengal': 'bn',   // Bengali
-  'Maharashtra': 'mr',   // Marathi
-  'Gujarat': 'gu',       // Gujarati
-  'Tamil Nadu': 'ta'     // Tamil
-};
-
-// ------------------------------------------------------------------ helpers
+// ------------------------------------------------------------------ Helpers
 function authHeaders() {
   return state.token ? { Authorization: `Bearer ${state.token}` } : {};
 }
@@ -42,27 +32,27 @@ function initials(name) {
   return (name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
 }
 
-// ------------------------------------------------------------------ auth modal
+// ------------------------------------------------------------------ Auth Modal
 const authBackdrop = document.getElementById('authBackdrop');
 if (authBackdrop) {
   document.querySelectorAll('[data-open-auth]').forEach((btn) => {
     btn.addEventListener('click', () => openAuth(btn.dataset.openAuth));
   });
-  document.getElementById('authClose').addEventListener('click', closeAuth);
+  document.getElementById('authClose')?.addEventListener('click', closeAuth);
   authBackdrop.addEventListener('click', (e) => { if (e.target === authBackdrop) closeAuth(); });
 }
 
 function openAuth(tab) {
-  authBackdrop.classList.remove('hidden');
+  if (authBackdrop) authBackdrop.classList.remove('hidden');
   switchTab(tab);
 }
 function closeAuth() {
-  authBackdrop.classList.add('hidden');
+  if (authBackdrop) authBackdrop.classList.add('hidden');
 }
 function switchTab(tab) {
   document.querySelectorAll('.modal__tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === tab));
-  document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
-  document.getElementById('signupForm').classList.toggle('hidden', tab !== 'signup');
+  document.getElementById('loginForm')?.classList.toggle('hidden', tab !== 'login');
+  document.getElementById('signupForm')?.classList.toggle('hidden', tab !== 'signup');
 }
 document.querySelectorAll('.modal__tab').forEach((t) => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
@@ -70,13 +60,13 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
   const errEl = document.getElementById('loginError');
-  errEl.textContent = '';
+  if (errEl) errEl.textContent = '';
   try {
     const data = await api('/api/auth/login', { method: 'POST', body: { email: form.get('email'), password: form.get('password') } });
     onAuthed(data);
     closeAuth();
   } catch (err) {
-    errEl.textContent = err.message;
+    if (errEl) errEl.textContent = err.message;
   }
 });
 
@@ -84,7 +74,7 @@ document.getElementById('signupForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
   const errEl = document.getElementById('signupError');
-  errEl.textContent = '';
+  if (errEl) errEl.textContent = '';
   try {
     const data = await api('/api/auth/signup', {
       method: 'POST',
@@ -99,7 +89,7 @@ document.getElementById('signupForm')?.addEventListener('submit', async (e) => {
     onAuthed(data);
     closeAuth();
   } catch (err) {
-    errEl.textContent = err.message;
+    if (errEl) errEl.textContent = err.message;
   }
 });
 
@@ -114,43 +104,46 @@ document.getElementById('signOutBtn')?.addEventListener('click', () => {
   state.token = null;
   state.user = null;
   localStorage.removeItem('ku_token');
-  document.getElementById('dashboard').classList.add('hidden');
-  document.getElementById('landing').classList.remove('hidden');
-  document.getElementById('authActions').classList.remove('hidden');
-  document.getElementById('userActions').classList.add('hidden');
+  document.getElementById('dashboard')?.classList.add('hidden');
+  document.getElementById('landing')?.classList.remove('hidden');
+  document.getElementById('authActions')?.classList.remove('hidden');
+  document.getElementById('userActions')?.classList.add('hidden');
 });
 
-// ------------------------------------------------------------------ render dashboard
+// ------------------------------------------------------------------ Render Dashboard
 function renderAuthedUI() {
-  document.getElementById('authActions').classList.add('hidden');
-  document.getElementById('userActions').classList.remove('hidden');
-  document.getElementById('userChip').textContent = state.user.name;
-  document.getElementById('landing').classList.add('hidden');
-  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('authActions')?.classList.add('hidden');
+  document.getElementById('userActions')?.classList.remove('hidden');
+  const userChip = document.getElementById('userChip');
+  if (userChip) userChip.textContent = state.user.name;
+  
+  document.getElementById('landing')?.classList.add('hidden');
+  document.getElementById('dashboard')?.classList.remove('hidden');
 
-  document.getElementById('avatarInitial').textContent = initials(state.user.name);
-  document.getElementById('profileName').textContent = state.user.name;
-  document.getElementById('profileMeta').textContent = `${state.user.location} · ${state.user.primaryCrops}`;
+  const avatarInitial = document.getElementById('avatarInitial');
+  if (avatarInitial) avatarInitial.textContent = initials(state.user.name);
+  
+  const profileName = document.getElementById('profileName');
+  if (profileName) profileName.textContent = state.user.name;
+
+  const profileMeta = document.getElementById('profileMeta');
+  if (profileMeta) profileMeta.textContent = `${state.user.location} · ${state.user.primaryCrops}`;
 
   const badge = document.getElementById('subBadge');
   const paywall = document.getElementById('paywallCard');
   if (state.user.isSubscribed) {
-    badge.textContent = 'Krishak Plus';
-    badge.classList.add('is-active');
-    paywall.classList.add('hidden');
+    if (badge) { badge.textContent = 'Krishak Plus'; badge.classList.add('is-active'); }
+    if (paywall) paywall.classList.add('hidden');
   } else {
-    badge.textContent = 'Free plan';
-    badge.classList.remove('is-active');
-    paywall.classList.remove('hidden');
+    if (badge) { badge.textContent = 'Free plan'; badge.classList.remove('is-active'); }
+    if (paywall) paywall.classList.remove('hidden');
   }
 
-  // Pre-fill crop in booking form
   const bookCropInput = document.getElementById('bookCrop');
   if (bookCropInput && state.user.primaryCrops) {
     bookCropInput.value = state.user.primaryCrops.split(',')[0].trim();
   }
 
-  // Set default booking date to today
   const bookDateInput = document.getElementById('bookDate');
   if (bookDateInput) {
     bookDateInput.value = new Date().toISOString().split('T')[0];
@@ -160,7 +153,7 @@ function renderAuthedUI() {
   loadQueueStatus();
 }
 
-// ------------------------------------------------------------------ dashboard nav
+// ------------------------------------------------------------------ Dashboard Navigation
 document.querySelectorAll('.dash-nav__item').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.dash-nav__item').forEach((b) => b.classList.remove('is-active'));
@@ -168,7 +161,8 @@ document.querySelectorAll('.dash-nav__item').forEach((btn) => {
     document.querySelectorAll('.panel').forEach((p) => p.classList.add('hidden'));
     
     const panelId = btn.dataset.panel;
-    document.getElementById(`panel-${panelId}`).classList.remove('hidden');
+    const targetPanel = document.getElementById(`panel-${panelId}`);
+    if (targetPanel) targetPanel.classList.remove('hidden');
 
     if (panelId === 'markets') {
       initMap();
@@ -197,58 +191,39 @@ async function loadMandiDropdown() {
 document.getElementById('bookingForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  // Show Verification Modal before proceeding with booking
-  openVerificationModal();
-});
+  const resultEl = document.getElementById('bookingResult');
+  if (resultEl) resultEl.classList.add('hidden');
 
-// Verification Modal Flow
-function openVerificationModal() {
-  const modal = document.getElementById('verificationModal');
-  if (modal) modal.classList.remove('hidden');
-}
-
-document.getElementById('closeModalBtn')?.addEventListener('click', () => {
-  document.getElementById('verificationModal').classList.add('hidden');
-});
-
-document.getElementById('verifyBtn')?.addEventListener('click', async () => {
-  const idInput = document.getElementById('idInput').value.trim();
-  if (idInput.length !== 12 || isNaN(idInput)) {
-    alert('Please enter a valid 12-digit ID number.');
-    return;
-  }
+  const payload = {
+    mandiId: document.getElementById('bookMandi')?.value,
+    date: document.getElementById('bookDate')?.value,
+    timeSlot: document.getElementById('bookSlot')?.value,
+    crop: document.getElementById('bookCrop')?.value,
+    quantityQuintals: document.getElementById('bookQty')?.value,
+  };
 
   try {
-    // Proceed with booking call once ID format is validated
-    const resultEl = document.getElementById('bookingResult');
-    resultEl.classList.add('hidden');
-
-    const payload = {
-      mandiId: document.getElementById('bookMandi').value,
-      date: document.getElementById('bookDate').value,
-      timeSlot: document.getElementById('bookSlot').value,
-      crop: document.getElementById('bookCrop').value,
-      quantityQuintals: document.getElementById('bookQty').value,
-      identityNumber: idInput
-    };
-
     const data = await api('/api/bookings/book', { method: 'POST', body: payload });
-    
-    document.getElementById('verificationModal').classList.add('hidden');
-    resultEl.classList.remove('hidden');
-    resultEl.className = 'booking-result booking-result--success';
-    resultEl.innerHTML = `
-      <h4>🎉 Slot Booked Successfully!</h4>
-      <p><strong>Token Number:</strong> ${data.booking.token}</p>
-      <p><strong>Mandi:</strong> ${data.booking.mandiName}</p>
-      <p><strong>Date & Slot:</strong> ${data.booking.date} | ${data.booking.timeSlot}</p>
-    `;
+    if (resultEl) {
+      resultEl.classList.remove('hidden');
+      resultEl.className = 'booking-result booking-result--success';
+      resultEl.innerHTML = `
+        <h4>🎉 Slot Booked Successfully!</h4>
+        <p><strong>Token Number:</strong> ${data.booking.token}</p>
+        <p><strong>Mandi:</strong> ${data.booking.mandiName}</p>
+        <p><strong>Date & Slot:</strong> ${data.booking.date} | ${data.booking.timeSlot}</p>
+      `;
+    }
 
     setTimeout(() => {
-      document.querySelector('[data-panel="queue-tracker"]').click();
+      document.querySelector('[data-panel="queue-tracker"]')?.click();
     }, 1800);
   } catch (err) {
-    alert('Verification/Booking Error: ' + err.message);
+    if (resultEl) {
+      resultEl.classList.remove('hidden');
+      resultEl.className = 'booking-result booking-result--error';
+      resultEl.textContent = err.message;
+    }
   }
 });
 
@@ -324,9 +299,10 @@ async function triggerSmsAlert(bookingId) {
 }
 window.triggerSmsAlert = triggerSmsAlert;
 
-// ------------------------------------------------------------------ map + best markets
+// ------------------------------------------------------------------ Map + Best Markets
 function initMap() {
-  if (state.map) return;
+  const mapEl = document.getElementById('map');
+  if (!mapEl || state.map) return;
   state.map = L.map('map').setView([state.coords.lat, state.coords.lng], 10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
@@ -335,6 +311,7 @@ function initMap() {
 }
 
 function clearMarkers() {
+  if (!state.map) return;
   state.markers.forEach((m) => state.map.removeLayer(m));
   state.markers = [];
 }
@@ -364,8 +341,9 @@ document.getElementById('locateBtn')?.addEventListener('click', () => {
 
 async function loadBestMarkets() {
   const listEl = document.getElementById('marketList');
+  if (!listEl) return;
 
-  if (!state.user.isSubscribed) {
+  if (!state.user?.isSubscribed) {
     listEl.innerHTML = '<li class="muted">Ranked best-market analytics is part of Krishak Plus. Upgrade from the sidebar.</li>';
     if (state.map) {
       initMap();
@@ -409,22 +387,11 @@ async function loadBestMarkets() {
   }
 }
 
-// ------------------------------------------------------------------ AI chat & Speech Recognition
+// ------------------------------------------------------------------ AI Chat & Speech Recognition
 const chatWindow = document.getElementById('chatWindow');
 const micBtn = document.getElementById('micBtn');
 const chatInput = document.getElementById('chatInput');
-const langToggleBtn = document.getElementById('langToggleBtn');
 
-// Language Toggle Control
-langToggleBtn?.addEventListener('click', () => {
-  const userState = state.user?.location?.split(',')[1]?.trim() || 'Haryana';
-  const localLang = REGIONAL_LANGUAGES[userState] || 'hi';
-  
-  state.currentLang = state.currentLang === 'en' ? localLang : 'en';
-  langToggleBtn.textContent = state.currentLang === 'en' ? 'En ⇄ Regional' : `Lang: ${state.currentLang.toUpperCase()}`;
-});
-
-// Web Speech API Integration
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (SpeechRecognition && micBtn) {
@@ -440,9 +407,9 @@ if (SpeechRecognition && micBtn) {
 
   recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
-    chatInput.value = transcript;
+    if (chatInput) chatInput.value = transcript;
     micBtn.classList.remove('listening');
-    document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+    document.getElementById('chatForm')?.dispatchEvent(new Event('submit'));
   };
 
   recognition.onerror = () => {
@@ -462,6 +429,7 @@ function formatAIResponse(text) {
 }
 
 function addMsg(text, who) {
+  if (!chatWindow) return;
   const div = document.createElement('div');
   div.className = `chat-msg chat-msg--${who}`;
   
@@ -478,10 +446,11 @@ function addMsg(text, who) {
 document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = document.getElementById('chatInput');
+  if (!input) return;
   const text = input.value.trim();
   if (!text) return;
 
-  if (!state.user?.isSubscribed) {
+  if (state.user && !state.user.isSubscribed) {
     addMsg("The AI advisor is part of Krishak Plus — upgrade from the sidebar to start chatting.", 'ai');
     input.value = '';
     return;
@@ -502,11 +471,11 @@ document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
     });
     addMsg(reply, 'ai');
   } catch (err) {
-    addMsg(err.message, 'ai');
+    addMsg(err.message || 'Error reaching AI endpoint.', 'ai');
   }
 });
 
-// ------------------------------------------------------------------ Razorpay subscription
+// ------------------------------------------------------------------ Razorpay Subscription
 document.getElementById('upgradeBtn')?.addEventListener('click', async () => {
   try {
     const data = await api('/api/payments/create-order', { method: 'POST' });
@@ -545,7 +514,7 @@ document.getElementById('upgradeBtn')?.addEventListener('click', async () => {
   }
 });
 
-// ------------------------------------------------------------------ boot
+// ------------------------------------------------------------------ Boot
 (async function boot() {
   if (!state.token) return;
   try {
