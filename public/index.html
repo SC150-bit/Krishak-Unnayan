@@ -1,255 +1,528 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Krishak Unnayan — Procurement Scheduling & Mandi Queue Management</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="styles.css" />
-<link rel="manifest" href="manifest.json">
-</head>
-<body>
+const API = '';
+const state = {
+  token: localStorage.getItem('ku_token') || null,
+  user: null,
+  coords: { lat: 29.6857, lng: 76.9905 }, // default: Karnal, Haryana
+  map: null,
+  markers: [],
+  currentLang: 'en',
+};
 
-<header class="topbar">
-  <div class="topbar__inner">
-    <a class="brand" href="#/">
-      <svg class="brand__mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 4C20 4 9 10 9 21C9 27.6274 13.9249 33 20 33C26.0751 33 31 27.6274 31 21C31 10 20 4 20 4Z" fill="#1F4D2C"/>
-        <path d="M20 33V37" stroke="#1F4D2C" stroke-width="2" stroke-linecap="round"/>
-        <path d="M20 12C20 12 14 15.5 14 21C14 24.3137 16.6863 27 20 27" stroke="#D98C2B" stroke-width="1.6" stroke-linecap="round"/>
-      </svg>
-      <span>Krishak Unnayan</span>
-    </a>
-    <nav class="topbar__nav" id="topNav">
-      <a href="#how">How it works</a>
-      <a href="#features">Features</a>
-      <a href="#pricing">Pricing</a>
-    </nav>
-    <div class="topbar__actions" id="authActions">
-      <button class="btn btn--ghost" data-open-auth="login">Sign in</button>
-      <button class="btn btn--primary" data-open-auth="signup">Get started</button>
-    </div>
-    <div class="topbar__actions topbar__actions--user hidden" id="userActions">
-      <span class="user-chip" id="userChip"></span>
-      <button class="btn btn--ghost" id="signOutBtn">Sign out</button>
-    </div>
-  </div>
-</header>
+// ------------------------------------------------------------------ Helpers
+function authHeaders() {
+  return state.token ? { Authorization: `Bearer ${state.token}` } : {};
+}
 
-<main id="landing">
-  <section class="hero">
-    <div class="hero__copy">
-      <h1>Zero-Wait Mandi Procurement & Smart Queueing.</h1>
-      <p class="hero__sub">Book procurement slots in advance, avoid long mandi waiting times, track your queue status live, and find the highest paying market for your crop today.</p>
-      <div class="hero__cta">
-        <button class="btn btn--primary btn--lg" data-open-auth="signup">Book Slot Free</button>
-        <a class="btn btn--text" href="#how">See how it works ↓</a>
-      </div>
-      <dl class="hero__stats">
-        <div><dt>6</dt><dd>mandis tracked</dd></div>
-        <div><dt>0 Min</dt><dd>queue waiting with token</dd></div>
-        <div><dt>2 min</dt><dd>to book a slot</dd></div>
-      </dl>
-    </div>
-    <div class="hero__art" aria-hidden="true">
-      <svg viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="240" cy="240" r="230" fill="#F0F6EC"/>
-        <g stroke="#1F4D2C" stroke-width="6" stroke-linecap="round">
-          <path d="M200 360 L200 160"/>
-          <path d="M200 160 L176 128"/>
-          <path d="M200 160 L224 128"/>
-        </g>
-        <circle cx="360" cy="120" r="34" fill="#D98C2B"/>
-      </svg>
-    </div>
-  </section>
+async function api(path, options = {}) {
+  const res = await fetch(API + path, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders(),
+      ...(options.headers || {}),
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(data.error || 'Something went wrong.'), { code: data.code, status: res.status });
+  return data;
+}
 
-  <section class="how" id="how">
-    <h2>Three steps to fast procurement</h2>
-    <ol class="steps">
-      <li>
-        <span class="steps__num">1</span>
-        <h3>Select Mandi & Book Slot</h3>
-        <p>Choose your nearest procurement center, preferred date, time slot, and estimated crop volume.</p>
-      </li>
-      <li>
-        <span class="steps__num">2</span>
-        <h3>Get Digital Token</h3>
-        <p>Receive a digital queue token with estimated time to arrive at the procurement gate.</p>
-      </li>
-      <li>
-        <span class="steps__num">3</span>
-        <h3>Live Queue Updates & SMS</h3>
-        <p>Track current serving tokens in real-time and receive SMS notifications before your turn.</p>
-      </li>
-    </ol>
-  </section>
+function initials(name) {
+  return (name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
+}
 
-  <section class="features" id="features">
-    <h2>Smart Procurement Solution</h2>
-    <div class="feature-grid">
-      <article class="feature-card">
-        <h3>Slot Booking System</h3>
-        <p>Eliminate random queueing by pre-booking scheduled procurement dates and times.</p>
-      </article>
-      <article class="feature-card">
-        <h3>Real-Time Queue Tracking</h3>
-        <p>Check live serving tokens and estimated remaining waiting times from your phone.</p>
-      </article>
-      <article class="feature-card">
-        <h3>SMS & App Alerts</h3>
-        <p>Get automated notification triggers when your token number is 15 minutes away.</p>
-      </article>
-      <article class="feature-card">
-        <h3>AI Assistant & Price Board</h3>
-        <p>Inquire about crop schedules and find net returns across neighboring markets.</p>
-      </article>
-    </div>
-  </section>
-</main>
+// ------------------------------------------------------------------ Auth Modal
+const authBackdrop = document.getElementById('authBackdrop');
+if (authBackdrop) {
+  document.querySelectorAll('[data-open-auth]').forEach((btn) => {
+    btn.addEventListener('click', () => openAuth(btn.dataset.openAuth));
+  });
+  document.getElementById('authClose')?.addEventListener('click', closeAuth);
+  authBackdrop.addEventListener('click', (e) => { if (e.target === authBackdrop) closeAuth(); });
+}
 
-<main id="dashboard" class="dashboard hidden">
-  <div class="dashboard__grid">
-    <aside class="dashboard__side">
-      <div class="profile-card">
-        <div class="profile-card__avatar" id="avatarInitial"></div>
-        <div>
-          <h3 id="profileName"></h3>
-          <p id="profileMeta"></p>
+function openAuth(tab) {
+  if (authBackdrop) authBackdrop.classList.remove('hidden');
+  switchTab(tab);
+}
+function closeAuth() {
+  if (authBackdrop) authBackdrop.classList.add('hidden');
+}
+function switchTab(tab) {
+  document.querySelectorAll('.modal__tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === tab));
+  document.getElementById('loginForm')?.classList.toggle('hidden', tab !== 'login');
+  document.getElementById('signupForm')?.classList.toggle('hidden', tab !== 'signup');
+}
+document.querySelectorAll('.modal__tab').forEach((t) => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const errEl = document.getElementById('loginError');
+  if (errEl) errEl.textContent = '';
+  try {
+    const data = await api('/api/auth/login', { method: 'POST', body: { email: form.get('email'), password: form.get('password') } });
+    onAuthed(data);
+    closeAuth();
+  } catch (err) {
+    if (errEl) errEl.textContent = err.message;
+  }
+});
+
+document.getElementById('signupForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const errEl = document.getElementById('signupError');
+  if (errEl) errEl.textContent = '';
+  try {
+    const data = await api('/api/auth/signup', {
+      method: 'POST',
+      body: {
+        name: form.get('name'),
+        email: form.get('email'),
+        password: form.get('password'),
+        location: form.get('location'),
+        primaryCrops: form.get('primaryCrops'),
+      },
+    });
+    onAuthed(data);
+    closeAuth();
+  } catch (err) {
+    if (errEl) errEl.textContent = err.message;
+  }
+});
+
+function onAuthed({ token, user }) {
+  state.token = token;
+  state.user = user;
+  localStorage.setItem('ku_token', token);
+  renderAuthedUI();
+}
+
+document.getElementById('signOutBtn')?.addEventListener('click', () => {
+  state.token = null;
+  state.user = null;
+  localStorage.removeItem('ku_token');
+  document.getElementById('dashboard')?.classList.add('hidden');
+  document.getElementById('landing')?.classList.remove('hidden');
+  document.getElementById('authActions')?.classList.remove('hidden');
+  document.getElementById('userActions')?.classList.add('hidden');
+});
+
+// ------------------------------------------------------------------ Render Dashboard
+function renderAuthedUI() {
+  document.getElementById('authActions')?.classList.add('hidden');
+  document.getElementById('userActions')?.classList.remove('hidden');
+  const userChip = document.getElementById('userChip');
+  if (userChip) userChip.textContent = state.user.name;
+  
+  document.getElementById('landing')?.classList.add('hidden');
+  document.getElementById('dashboard')?.classList.remove('hidden');
+
+  const avatarInitial = document.getElementById('avatarInitial');
+  if (avatarInitial) avatarInitial.textContent = initials(state.user.name);
+  
+  const profileName = document.getElementById('profileName');
+  if (profileName) profileName.textContent = state.user.name;
+
+  const profileMeta = document.getElementById('profileMeta');
+  if (profileMeta) profileMeta.textContent = `${state.user.location} · ${state.user.primaryCrops}`;
+
+  const badge = document.getElementById('subBadge');
+  const paywall = document.getElementById('paywallCard');
+  if (state.user.isSubscribed) {
+    if (badge) { badge.textContent = 'Krishak Plus'; badge.classList.add('is-active'); }
+    if (paywall) paywall.classList.add('hidden');
+  } else {
+    if (badge) { badge.textContent = 'Free plan'; badge.classList.remove('is-active'); }
+    if (paywall) paywall.classList.remove('hidden');
+  }
+
+  const bookCropInput = document.getElementById('bookCrop');
+  if (bookCropInput && state.user.primaryCrops) {
+    bookCropInput.value = state.user.primaryCrops.split(',')[0].trim();
+  }
+
+  const bookDateInput = document.getElementById('bookDate');
+  if (bookDateInput) {
+    bookDateInput.value = new Date().toISOString().split('T')[0];
+  }
+
+  loadMandiDropdown();
+  loadQueueStatus();
+}
+
+// ------------------------------------------------------------------ Dashboard Navigation
+document.querySelectorAll('.dash-nav__item').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dash-nav__item').forEach((b) => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    document.querySelectorAll('.panel').forEach((p) => p.classList.add('hidden'));
+    
+    const panelId = btn.dataset.panel;
+    const targetPanel = document.getElementById(`panel-${panelId}`);
+    if (targetPanel) targetPanel.classList.remove('hidden');
+
+    if (panelId === 'markets') {
+      initMap();
+      loadBestMarkets();
+    } else if (panelId === 'queue-tracker') {
+      loadQueueStatus();
+    }
+  });
+});
+
+// ------------------------------------------------------------------ Mandi Dropdown & Booking
+async function loadMandiDropdown() {
+  const select = document.getElementById('bookMandi');
+  if (!select) return;
+
+  try {
+    const mandis = await api('/api/mandis');
+    select.innerHTML = mandis
+      .map((m) => `<option value="${m.id}">${m.name} (₹${m.pricePerQuintal}/qtl)</option>`)
+      .join('');
+  } catch (err) {
+    select.innerHTML = '<option value="">Could not load mandis</option>';
+  }
+}
+
+document.getElementById('bookingForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const resultEl = document.getElementById('bookingResult');
+  if (resultEl) resultEl.classList.add('hidden');
+
+  const payload = {
+    mandiId: document.getElementById('bookMandi')?.value,
+    date: document.getElementById('bookDate')?.value,
+    timeSlot: document.getElementById('bookSlot')?.value,
+    crop: document.getElementById('bookCrop')?.value,
+    quantityQuintals: document.getElementById('bookQty')?.value,
+  };
+
+  try {
+    const data = await api('/api/bookings/book', { method: 'POST', body: payload });
+    if (resultEl) {
+      resultEl.classList.remove('hidden');
+      resultEl.className = 'booking-result booking-result--success';
+      resultEl.innerHTML = `
+        <h4>🎉 Slot Booked Successfully!</h4>
+        <p><strong>Token Number:</strong> ${data.booking.token}</p>
+        <p><strong>Mandi:</strong> ${data.booking.mandiName}</p>
+        <p><strong>Date & Slot:</strong> ${data.booking.date} | ${data.booking.timeSlot}</p>
+      `;
+    }
+
+    setTimeout(() => {
+      document.querySelector('[data-panel="queue-tracker"]')?.click();
+    }, 1800);
+  } catch (err) {
+    if (resultEl) {
+      resultEl.classList.remove('hidden');
+      resultEl.className = 'booking-result booking-result--error';
+      resultEl.textContent = err.message;
+    }
+  }
+});
+
+// ------------------------------------------------------------------ Live Queue Management
+document.getElementById('refreshQueueBtn')?.addEventListener('click', loadQueueStatus);
+
+async function loadQueueStatus() {
+  const container = document.getElementById('queueList');
+  if (!container) return;
+
+  try {
+    const { bookings } = await api('/api/bookings/my-queue');
+    if (!bookings || bookings.length === 0) {
+      container.innerHTML = `<div class="empty-state"><p>No active slot bookings found. Click "Book Slot" to reserve your spot at a mandi.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = bookings
+      .map((b) => {
+        const { liveQueue } = b;
+        return `
+          <div class="token-card">
+            <div class="token-card__header">
+              <div>
+                <span class="token-badge">${b.token}</span>
+                <span class="queue-status-pill queue-status-pill--${liveQueue.queueStatus.replace(/\s+/g, '-').toLowerCase()}">
+                  ${liveQueue.queueStatus}
+                </span>
+              </div>
+              <small class="muted">Booked on ${new Date(b.createdAt).toLocaleDateString()}</small>
+            </div>
+
+            <div class="token-card__body">
+              <div><strong>Mandi:</strong> ${b.mandiName}</div>
+              <div><strong>Scheduled Slot:</strong> ${b.date} (${b.timeSlot})</div>
+              <div><strong>Crop Details:</strong> ${b.quantityQuintals} Quintals of ${b.crop}</div>
+            </div>
+
+            <div class="token-card__queue-info">
+              <div class="queue-stat">
+                <span class="queue-stat__label">Currently Serving Gate Token</span>
+                <span class="queue-stat__val">${liveQueue.currentServingToken}</span>
+              </div>
+              <div class="queue-stat">
+                <span class="queue-stat__label">Vehicles Ahead</span>
+                <span class="queue-stat__val">${liveQueue.tokensAhead}</span>
+              </div>
+              <div class="queue-stat">
+                <span class="queue-stat__label">Est. Wait Time</span>
+                <span class="queue-stat__val">~${liveQueue.estimatedWaitMins} mins</span>
+              </div>
+            </div>
+
+            <div class="token-card__actions">
+              <button class="btn btn--ghost btn--sm" onclick="triggerSmsAlert('${b.id}')">Simulate SMS Notification</button>
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+  } catch (err) {
+    container.innerHTML = `<p class="form-error">Could not fetch queue details: ${err.message}</p>`;
+  }
+}
+
+async function triggerSmsAlert(bookingId) {
+  try {
+    const res = await api('/api/bookings/send-sms', { method: 'POST', body: { bookingId } });
+    alert(res.smsText);
+  } catch (err) {
+    alert('SMS Trigger Error: ' + err.message);
+  }
+}
+window.triggerSmsAlert = triggerSmsAlert;
+
+// ------------------------------------------------------------------ Map + Best Markets
+function initMap() {
+  const mapEl = document.getElementById('map');
+  if (!mapEl || state.map) return;
+  state.map = L.map('map').setView([state.coords.lat, state.coords.lng], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 18,
+  }).addTo(state.map);
+}
+
+function clearMarkers() {
+  if (!state.map) return;
+  state.markers.forEach((m) => state.map.removeLayer(m));
+  state.markers = [];
+}
+
+const farmerIcon = L.divIcon({
+  className: '',
+  html: '<div style="width:16px;height:16px;border-radius:50%;background:#1F4D2C;border:3px solid #fff;box-shadow:0 0 0 2px #1F4D2C;"></div>',
+  iconSize: [16, 16],
+});
+const mandiIcon = (rank) => L.divIcon({
+  className: '',
+  html: `<div style="width:26px;height:26px;border-radius:50%;background:#D98C2B;color:#fff;display:flex;align-items:center;justify-content:center;font:700 12px Manrope,sans-serif;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);">${rank}</div>`,
+  iconSize: [26, 26],
+});
+
+document.getElementById('locateBtn')?.addEventListener('click', () => {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      state.coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      loadBestMarkets();
+    },
+    () => { /* fallback */ },
+    { timeout: 6000 }
+  );
+});
+
+async function loadBestMarkets() {
+  const listEl = document.getElementById('marketList');
+  if (!listEl) return;
+
+  if (!state.user?.isSubscribed) {
+    listEl.innerHTML = '<li class="muted">Ranked best-market analytics is part of Krishak Plus. Upgrade from the sidebar.</li>';
+    if (state.map) {
+      initMap();
+      clearMarkers();
+      const me = L.marker([state.coords.lat, state.coords.lng], { icon: farmerIcon }).addTo(state.map).bindPopup('You');
+      state.markers.push(me);
+    }
+    return;
+  }
+
+  try {
+    const { results, origin } = await api(`/api/mandis/best?lat=${state.coords.lat}&lng=${state.coords.lng}`);
+    listEl.innerHTML = '';
+    results.forEach((m, i) => {
+      const li = document.createElement('li');
+      if (i === 0) li.classList.add('is-top');
+      li.innerHTML = `
+        <span class="market-rank">${i + 1}</span>
+        <div style="flex:1">
+          <div class="market-name">${m.name}</div>
+          <div class="market-sub">${m.distanceKm} km away · ₹${m.pricePerQuintal}/quintal</div>
         </div>
-        <span class="badge" id="subBadge"></span>
-      </div>
+        <div class="market-net">₹${m.netPerQuintal}<small>net / quintal</small></div>
+      `;
+      listEl.appendChild(li);
+    });
 
-      <div class="paywall-card hidden" id="paywallCard">
-        <h4>Unlock Krishak Plus</h4>
-        <p>Get AI advisor & priority route optimization for ₹30/month.</p>
-        <button class="btn btn--primary" id="upgradeBtn">Upgrade for ₹30</button>
-      </div>
+    initMap();
+    clearMarkers();
+    state.map.setView([origin.lat, origin.lng], 10);
+    const me = L.marker([origin.lat, origin.lng], { icon: farmerIcon }).addTo(state.map).bindPopup('You');
+    state.markers.push(me);
+    results.forEach((m, i) => {
+      const marker = L.marker([m.lat, m.lng], { icon: mandiIcon(i + 1) })
+        .addTo(state.map)
+        .bindPopup(`<strong>${m.name}</strong><br>₹${m.pricePerQuintal}/quintal · ${m.distanceKm} km`);
+      state.markers.push(marker);
+    });
+  } catch (err) {
+    listEl.innerHTML = `<li class="form-error">${err.message}</li>`;
+  }
+}
 
-      <nav class="dash-nav">
-        <button class="dash-nav__item is-active" data-panel="slot-booking">Book Slot</button>
-        <button class="dash-nav__item" data-panel="queue-tracker">Live Queue Status</button>
-        <button class="dash-nav__item" data-panel="markets">Best Markets</button>
-        <button class="dash-nav__item" data-panel="assistant">AI Assistant</button>
-      </nav>
-    </aside>
+// ------------------------------------------------------------------ AI Chat & Speech Recognition
+const chatWindow = document.getElementById('chatWindow');
+const micBtn = document.getElementById('micBtn');
+const chatInput = document.getElementById('chatInput');
 
-    <section class="dashboard__main">
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-      <!-- Panel 1: Slot Booking System -->
-      <div class="panel" id="panel-slot-booking">
-        <div class="panel__header">
-          <h2>Procurement Slot Booking</h2>
-        </div>
-        <p class="muted">Schedule your crop delivery in advance to avoid long gate queues.</p>
-        
-        <form id="bookingForm" class="booking-form">
-          <label>Select Mandi Center
-            <select id="bookMandi" required></select>
-          </label>
-          
-          <label>Delivery Date
-            <input type="date" id="bookDate" required />
-          </label>
+if (SpeechRecognition && micBtn) {
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
 
-          <label>Time Slot
-            <select id="bookSlot" required>
-              <option value="08:00 AM - 10:00 AM">08:00 AM - 10:00 AM</option>
-              <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
-              <option value="12:00 PM - 02:00 PM">12:00 PM - 02:00 PM</option>
-              <option value="02:00 PM - 04:00 PM">02:00 PM - 04:00 PM</option>
-              <option value="04:00 PM - 06:00 PM">04:00 PM - 06:00 PM</option>
-            </select>
-          </label>
+  micBtn.addEventListener('click', () => {
+    recognition.lang = state.currentLang === 'hi' ? 'hi-IN' : 'en-US';
+    recognition.start();
+    micBtn.classList.add('listening');
+  });
 
-          <label>Crop Type
-            <input type="text" id="bookCrop" placeholder="e.g. Wheat, Paddy" required />
-          </label>
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    if (chatInput) chatInput.value = transcript;
+    micBtn.classList.remove('listening');
+    document.getElementById('chatForm')?.dispatchEvent(new Event('submit'));
+  };
 
-          <label>Estimated Quantity (Quintals)
-            <input type="number" id="bookQty" placeholder="e.g. 50" min="1" required />
-          </label>
+  recognition.onerror = () => {
+    micBtn.classList.remove('listening');
+  };
+} else if (micBtn) {
+  micBtn.style.display = 'none';
+}
 
-          <button class="btn btn--primary btn--lg" type="submit">Confirm Slot Booking</button>
-        </form>
-        <div id="bookingResult" class="booking-result hidden"></div>
-      </div>
+function formatAIResponse(text) {
+  if (!text) return '';
+  return text
+    .replace(/#/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+    .replace(/(\d+\.\s+)/g, '<br><br>$1')
+    .replace(/^(<br>)+/, '');
+}
 
-      <!-- Panel 2: Live Queue Management -->
-      <div class="panel hidden" id="panel-queue-tracker">
-        <div class="panel__header">
-          <h2>Live Mandi Queue & Token Tracking</h2>
-          <button class="btn btn--ghost btn--sm" id="refreshQueueBtn">Refresh Live Queue</button>
-        </div>
-        <p class="muted">Track live procurement gate status and estimated entry time.</p>
-        <div id="queueList" class="queue-list"></div>
-      </div>
+function addMsg(text, who) {
+  if (!chatWindow) return;
+  const div = document.createElement('div');
+  div.className = `chat-msg chat-msg--${who}`;
+  
+  if (who === 'ai') {
+    div.innerHTML = formatAIResponse(text);
+  } else {
+    div.textContent = text;
+  }
 
-      <!-- Panel 3: Best Markets -->
-      <div class="panel hidden" id="panel-markets">
-        <div class="panel__header">
-          <h2>Best Markets for Your Harvest</h2>
-          <button class="btn btn--ghost btn--sm" id="locateBtn">Use My Location</button>
-        </div>
-        <div class="markets-layout">
-          <div id="map" class="map"></div>
-          <ol class="market-list" id="marketList"></ol>
-        </div>
-      </div>
+  chatWindow.appendChild(div);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
 
-      <!-- Panel 4: AI Assistant -->
-      <div class="panel hidden" id="panel-assistant">
-        <div class="panel__header">
-          <h2>AI Agricultural & Procurement Advisor</h2>
-        </div>
-        <div class="chat" id="chatWindow"></div>
-        <form class="chat-form" id="chatForm">
-          <input type="text" id="chatInput" placeholder="Ask about procurement rules, timing, or crop quality…" autocomplete="off" />
-          <button class="btn btn--primary" type="submit">Send</button>
-        </form>
-      </div>
+document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('chatInput');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
 
-    </section>
-  </div>
-</main>
+  if (state.user && !state.user.isSubscribed) {
+    addMsg("The AI advisor is part of Krishak Plus — upgrade from the sidebar to start chatting.", 'ai');
+    input.value = '';
+    return;
+  }
 
-<footer class="site-footer">
-  <span>Krishak Unnayan</span>
-  <span class="muted">Department of Consumer Affairs (DoCA) Procurement Automation Portal.</span>
-</footer>
+  addMsg(text, 'user');
+  input.value = '';
 
-<div class="modal-backdrop hidden" id="authBackdrop">
-  <div class="modal">
-    <button class="modal__close" id="authClose" aria-label="Close">×</button>
-    <div class="modal__tabs">
-      <button class="modal__tab is-active" data-tab="login">Sign in</button>
-      <button class="modal__tab" data-tab="signup">Create account</button>
-    </div>
+  try {
+    const { reply } = await api('/api/chat', {
+      method: 'POST',
+      body: { 
+        userPrompt: text, 
+        lat: state.coords.lat, 
+        lng: state.coords.lng,
+        targetLanguage: state.currentLang 
+      },
+    });
+    addMsg(reply, 'ai');
+  } catch (err) {
+    addMsg(err.message || 'Error reaching AI endpoint.', 'ai');
+  }
+});
 
-    <form id="loginForm" class="modal__form">
-      <label>Email<input type="email" name="email" required /></label>
-      <label>Password<input type="password" name="password" required /></label>
-      <p class="form-error" id="loginError"></p>
-      <button class="btn btn--primary btn--lg" type="submit">Sign in</button>
-    </form>
+// ------------------------------------------------------------------ Razorpay Subscription
+document.getElementById('upgradeBtn')?.addEventListener('click', async () => {
+  try {
+    const data = await api('/api/payments/create-order', { method: 'POST' });
+    if (!data || !data.order) throw new Error(data.error || 'Failed to create payment order.');
 
-    <form id="signupForm" class="modal__form hidden">
-      <label>Full name<input type="text" name="name" required /></label>
-      <label>Email<input type="email" name="email" required /></label>
-      <label>Password<input type="password" name="password" minlength="6" required /></label>
-      <label>Village / town<input type="text" name="location" placeholder="e.g. Karnal, Haryana" /></label>
-      <label>Primary crops<input type="text" name="primaryCrops" placeholder="e.g. Wheat, Paddy" /></label>
-      <p class="form-error" id="signupError"></p>
-      <button class="btn btn--primary btn--lg" type="submit">Create account</button>
-    </form>
-  </div>
-</div>
+    const { order, keyId } = data;
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script src="app.js"></script>
-</body>
-</html>
+    const rzp = new Razorpay({
+      key: keyId,
+      amount: order.amount,
+      currency: order.currency,
+      order_id: order.id,
+      name: 'Krishak Unnayan',
+      description: 'Krishak Plus — monthly subscription',
+      theme: { color: '#1F4D2C' },
+      handler: async (response) => {
+        try {
+          const { user } = await api('/api/payments/verify', { method: 'POST', body: response });
+          state.user = user;
+          renderAuthedUI();
+        } catch (err) {
+          alert(err.message || 'Payment verification failed.');
+        }
+      },
+      prefill: { name: state.user?.name || '', email: state.user?.email || '' },
+    });
+
+    rzp.on('payment.failed', function (response) {
+      alert(`Payment failed: ${response.error.description}`);
+    });
+
+    rzp.open();
+  } catch (err) {
+    console.error('Payment Error:', err);
+    alert(err.message || 'Could not start the payment.');
+  }
+});
+
+// ------------------------------------------------------------------ Boot
+(async function boot() {
+  if (!state.token) return;
+  try {
+    const { user } = await api('/api/auth/me');
+    state.user = user;
+    renderAuthedUI();
+  } catch {
+    localStorage.removeItem('ku_token');
+    state.token = null;
+  }
+})();
