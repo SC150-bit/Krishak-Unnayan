@@ -5,10 +5,9 @@ const state = {
   coords: { lat: 29.6857, lng: 76.9905 }, // default: Karnal, Haryana
   map: null,
   markers: [],
-  currentLang: 'en',
 };
 
-// ------------------------------------------------------------------ Helpers
+// ------------------------------------------------------------------ helpers
 function authHeaders() {
   return state.token ? { Authorization: `Bearer ${state.token}` } : {};
 }
@@ -32,49 +31,47 @@ function initials(name) {
   return (name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join('');
 }
 
-// ------------------------------------------------------------------ Auth Modal
+// ------------------------------------------------------------------ auth modal
 const authBackdrop = document.getElementById('authBackdrop');
-if (authBackdrop) {
-  document.querySelectorAll('[data-open-auth]').forEach((btn) => {
-    btn.addEventListener('click', () => openAuth(btn.dataset.openAuth));
-  });
-  document.getElementById('authClose')?.addEventListener('click', closeAuth);
-  authBackdrop.addEventListener('click', (e) => { if (e.target === authBackdrop) closeAuth(); });
-}
+document.querySelectorAll('[data-open-auth]').forEach((btn) => {
+  btn.addEventListener('click', () => openAuth(btn.dataset.openAuth));
+});
+document.getElementById('authClose').addEventListener('click', closeAuth);
+authBackdrop.addEventListener('click', (e) => { if (e.target === authBackdrop) closeAuth(); });
 
 function openAuth(tab) {
-  if (authBackdrop) authBackdrop.classList.remove('hidden');
+  authBackdrop.classList.remove('hidden');
   switchTab(tab);
 }
 function closeAuth() {
-  if (authBackdrop) authBackdrop.classList.add('hidden');
+  authBackdrop.classList.add('hidden');
 }
 function switchTab(tab) {
   document.querySelectorAll('.modal__tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === tab));
-  document.getElementById('loginForm')?.classList.toggle('hidden', tab !== 'login');
-  document.getElementById('signupForm')?.classList.toggle('hidden', tab !== 'signup');
+  document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('signupForm').classList.toggle('hidden', tab !== 'signup');
 }
 document.querySelectorAll('.modal__tab').forEach((t) => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
-document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
   const errEl = document.getElementById('loginError');
-  if (errEl) errEl.textContent = '';
+  errEl.textContent = '';
   try {
     const data = await api('/api/auth/login', { method: 'POST', body: { email: form.get('email'), password: form.get('password') } });
     onAuthed(data);
     closeAuth();
   } catch (err) {
-    if (errEl) errEl.textContent = err.message;
+    errEl.textContent = err.message;
   }
 });
 
-document.getElementById('signupForm')?.addEventListener('submit', async (e) => {
+document.getElementById('signupForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
   const errEl = document.getElementById('signupError');
-  if (errEl) errEl.textContent = '';
+  errEl.textContent = '';
   try {
     const data = await api('/api/auth/signup', {
       method: 'POST',
@@ -89,7 +86,7 @@ document.getElementById('signupForm')?.addEventListener('submit', async (e) => {
     onAuthed(data);
     closeAuth();
   } catch (err) {
-    if (errEl) errEl.textContent = err.message;
+    errEl.textContent = err.message;
   }
 });
 
@@ -100,50 +97,47 @@ function onAuthed({ token, user }) {
   renderAuthedUI();
 }
 
-document.getElementById('signOutBtn')?.addEventListener('click', () => {
+document.getElementById('signOutBtn').addEventListener('click', () => {
   state.token = null;
   state.user = null;
   localStorage.removeItem('ku_token');
-  document.getElementById('dashboard')?.classList.add('hidden');
-  document.getElementById('landing')?.classList.remove('hidden');
-  document.getElementById('authActions')?.classList.remove('hidden');
-  document.getElementById('userActions')?.classList.add('hidden');
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('landing').classList.remove('hidden');
+  document.getElementById('authActions').classList.remove('hidden');
+  document.getElementById('userActions').classList.add('hidden');
 });
 
-// ------------------------------------------------------------------ Render Dashboard
+// ------------------------------------------------------------------ render dashboard
 function renderAuthedUI() {
-  document.getElementById('authActions')?.classList.add('hidden');
-  document.getElementById('userActions')?.classList.remove('hidden');
-  const userChip = document.getElementById('userChip');
-  if (userChip) userChip.textContent = state.user.name;
-  
-  document.getElementById('landing')?.classList.add('hidden');
-  document.getElementById('dashboard')?.classList.remove('hidden');
+  document.getElementById('authActions').classList.add('hidden');
+  document.getElementById('userActions').classList.remove('hidden');
+  document.getElementById('userChip').textContent = state.user.name;
+  document.getElementById('landing').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
 
-  const avatarInitial = document.getElementById('avatarInitial');
-  if (avatarInitial) avatarInitial.textContent = initials(state.user.name);
-  
-  const profileName = document.getElementById('profileName');
-  if (profileName) profileName.textContent = state.user.name;
-
-  const profileMeta = document.getElementById('profileMeta');
-  if (profileMeta) profileMeta.textContent = `${state.user.location} · ${state.user.primaryCrops}`;
+  document.getElementById('avatarInitial').textContent = initials(state.user.name);
+  document.getElementById('profileName').textContent = state.user.name;
+  document.getElementById('profileMeta').textContent = `${state.user.location} · ${state.user.primaryCrops}`;
 
   const badge = document.getElementById('subBadge');
   const paywall = document.getElementById('paywallCard');
   if (state.user.isSubscribed) {
-    if (badge) { badge.textContent = 'Krishak Plus'; badge.classList.add('is-active'); }
-    if (paywall) paywall.classList.add('hidden');
+    badge.textContent = 'Krishak Plus';
+    badge.classList.add('is-active');
+    paywall.classList.add('hidden');
   } else {
-    if (badge) { badge.textContent = 'Free plan'; badge.classList.remove('is-active'); }
-    if (paywall) paywall.classList.remove('hidden');
+    badge.textContent = 'Free plan';
+    badge.classList.remove('is-active');
+    paywall.classList.remove('hidden');
   }
 
+  // Pre-fill crop in booking form
   const bookCropInput = document.getElementById('bookCrop');
   if (bookCropInput && state.user.primaryCrops) {
     bookCropInput.value = state.user.primaryCrops.split(',')[0].trim();
   }
 
+  // Set default booking date to today
   const bookDateInput = document.getElementById('bookDate');
   if (bookDateInput) {
     bookDateInput.value = new Date().toISOString().split('T')[0];
@@ -153,7 +147,7 @@ function renderAuthedUI() {
   loadQueueStatus();
 }
 
-// ------------------------------------------------------------------ Dashboard Navigation
+// ------------------------------------------------------------------ dashboard nav
 document.querySelectorAll('.dash-nav__item').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.dash-nav__item').forEach((b) => b.classList.remove('is-active'));
@@ -161,8 +155,7 @@ document.querySelectorAll('.dash-nav__item').forEach((btn) => {
     document.querySelectorAll('.panel').forEach((p) => p.classList.add('hidden'));
     
     const panelId = btn.dataset.panel;
-    const targetPanel = document.getElementById(`panel-${panelId}`);
-    if (targetPanel) targetPanel.classList.remove('hidden');
+    document.getElementById(`panel-${panelId}`).classList.remove('hidden');
 
     if (panelId === 'markets') {
       initMap();
@@ -188,47 +181,43 @@ async function loadMandiDropdown() {
   }
 }
 
-document.getElementById('bookingForm')?.addEventListener('submit', async (e) => {
+document.getElementById('bookingForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
   const resultEl = document.getElementById('bookingResult');
-  if (resultEl) resultEl.classList.add('hidden');
+  resultEl.classList.add('hidden');
 
   const payload = {
-    mandiId: document.getElementById('bookMandi')?.value,
-    date: document.getElementById('bookDate')?.value,
-    timeSlot: document.getElementById('bookSlot')?.value,
-    crop: document.getElementById('bookCrop')?.value,
-    quantityQuintals: document.getElementById('bookQty')?.value,
+    mandiId: document.getElementById('bookMandi').value,
+    date: document.getElementById('bookDate').value,
+    timeSlot: document.getElementById('bookSlot').value,
+    crop: document.getElementById('bookCrop').value,
+    quantityQuintals: document.getElementById('bookQty').value,
   };
 
   try {
     const data = await api('/api/bookings/book', { method: 'POST', body: payload });
-    if (resultEl) {
-      resultEl.classList.remove('hidden');
-      resultEl.className = 'booking-result booking-result--success';
-      resultEl.innerHTML = `
-        <h4>🎉 Slot Booked Successfully!</h4>
-        <p><strong>Token Number:</strong> ${data.booking.token}</p>
-        <p><strong>Mandi:</strong> ${data.booking.mandiName}</p>
-        <p><strong>Date & Slot:</strong> ${data.booking.date} | ${data.booking.timeSlot}</p>
-      `;
-    }
+    resultEl.classList.remove('hidden');
+    resultEl.className = 'booking-result booking-result--success';
+    resultEl.innerHTML = `
+      <h4>🎉 Slot Booked Successfully!</h4>
+      <p><strong>Token Number:</strong> ${data.booking.token}</p>
+      <p><strong>Mandi:</strong> ${data.booking.mandiName}</p>
+      <p><strong>Date & Slot:</strong> ${data.booking.date} | ${data.booking.timeSlot}</p>
+    `;
 
+    // Switch over to Queue Tracker
     setTimeout(() => {
-      document.querySelector('[data-panel="queue-tracker"]')?.click();
+      document.querySelector('[data-panel="queue-tracker"]').click();
     }, 1800);
   } catch (err) {
-    if (resultEl) {
-      resultEl.classList.remove('hidden');
-      resultEl.className = 'booking-result booking-result--error';
-      resultEl.textContent = err.message;
-    }
+    resultEl.classList.remove('hidden');
+    resultEl.className = 'booking-result booking-result--error';
+    resultEl.textContent = err.message;
   }
 });
 
 // ------------------------------------------------------------------ Live Queue Management
-document.getElementById('refreshQueueBtn')?.addEventListener('click', loadQueueStatus);
+document.getElementById('refreshQueueBtn').addEventListener('click', loadQueueStatus);
 
 async function loadQueueStatus() {
   const container = document.getElementById('queueList');
@@ -299,10 +288,9 @@ async function triggerSmsAlert(bookingId) {
 }
 window.triggerSmsAlert = triggerSmsAlert;
 
-// ------------------------------------------------------------------ Map + Best Markets
+// ------------------------------------------------------------------ map + best markets
 function initMap() {
-  const mapEl = document.getElementById('map');
-  if (!mapEl || state.map) return;
+  if (state.map) return;
   state.map = L.map('map').setView([state.coords.lat, state.coords.lng], 10);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors',
@@ -311,7 +299,6 @@ function initMap() {
 }
 
 function clearMarkers() {
-  if (!state.map) return;
   state.markers.forEach((m) => state.map.removeLayer(m));
   state.markers = [];
 }
@@ -341,9 +328,8 @@ document.getElementById('locateBtn')?.addEventListener('click', () => {
 
 async function loadBestMarkets() {
   const listEl = document.getElementById('marketList');
-  if (!listEl) return;
 
-  if (!state.user?.isSubscribed) {
+  if (!state.user.isSubscribed) {
     listEl.innerHTML = '<li class="muted">Ranked best-market analytics is part of Krishak Plus. Upgrade from the sidebar.</li>';
     if (state.map) {
       initMap();
@@ -387,55 +373,35 @@ async function loadBestMarkets() {
   }
 }
 
-// ------------------------------------------------------------------ AI Chat & Speech Recognition
+// ------------------------------------------------------------------ AI chat
+// ------------------------------------------------------------------ AI chat
 const chatWindow = document.getElementById('chatWindow');
-const micBtn = document.getElementById('micBtn');
-const chatInput = document.getElementById('chatInput');
-
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-if (SpeechRecognition && micBtn) {
-  const recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
-  micBtn.addEventListener('click', () => {
-    recognition.lang = state.currentLang === 'hi' ? 'hi-IN' : 'en-US';
-    recognition.start();
-    micBtn.classList.add('listening');
-  });
-
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    if (chatInput) chatInput.value = transcript;
-    micBtn.classList.remove('listening');
-    document.getElementById('chatForm')?.dispatchEvent(new Event('submit'));
-  };
-
-  recognition.onerror = () => {
-    micBtn.classList.remove('listening');
-  };
-} else if (micBtn) {
-  micBtn.style.display = 'none';
-}
 
 function formatAIResponse(text) {
   if (!text) return '';
   return text
+    // Remove all '#' symbols anywhere in the string
     .replace(/#/g, '')
+    
+    // Convert markdown bold (**word**) to HTML bold (<b>word</b>)
     .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+    
+    // Add clean line breaks before numbered points or inline headings
     .replace(/(\d+\.\s+)/g, '<br><br>$1')
+    
+    // Clean up double line breaks at the start
     .replace(/^(<br>)+/, '');
 }
 
 function addMsg(text, who) {
-  if (!chatWindow) return;
   const div = document.createElement('div');
   div.className = `chat-msg chat-msg--${who}`;
   
   if (who === 'ai') {
+    // Render formatted HTML for AI messages
     div.innerHTML = formatAIResponse(text);
   } else {
+    // Render plain text for user messages
     div.textContent = text;
   }
 
@@ -443,14 +409,13 @@ function addMsg(text, who) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
+document.getElementById('chatForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = document.getElementById('chatInput');
-  if (!input) return;
   const text = input.value.trim();
   if (!text) return;
 
-  if (state.user && !state.user.isSubscribed) {
+  if (!state.user.isSubscribed) {
     addMsg("The AI advisor is part of Krishak Plus — upgrade from the sidebar to start chatting.", 'ai');
     input.value = '';
     return;
@@ -462,21 +427,16 @@ document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
   try {
     const { reply } = await api('/api/chat', {
       method: 'POST',
-      body: { 
-        userPrompt: text, 
-        lat: state.coords.lat, 
-        lng: state.coords.lng,
-        targetLanguage: state.currentLang 
-      },
+      body: { userPrompt: text, lat: state.coords.lat, lng: state.coords.lng },
     });
     addMsg(reply, 'ai');
   } catch (err) {
-    addMsg(err.message || 'Error reaching AI endpoint.', 'ai');
+    addMsg(err.message, 'ai');
   }
 });
 
-// ------------------------------------------------------------------ Razorpay Subscription
-document.getElementById('upgradeBtn')?.addEventListener('click', async () => {
+// ------------------------------------------------------------------ Razorpay subscription
+document.getElementById('upgradeBtn').addEventListener('click', async () => {
   try {
     const data = await api('/api/payments/create-order', { method: 'POST' });
     if (!data || !data.order) throw new Error(data.error || 'Failed to create payment order.');
@@ -514,7 +474,7 @@ document.getElementById('upgradeBtn')?.addEventListener('click', async () => {
   }
 });
 
-// ------------------------------------------------------------------ Boot
+// ------------------------------------------------------------------ boot
 (async function boot() {
   if (!state.token) return;
   try {
