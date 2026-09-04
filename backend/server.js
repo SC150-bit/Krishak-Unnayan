@@ -21,23 +21,28 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret',
 });
 
-// AI Assistant Chat Endpoint
+// ------------------------------------------------------------------ AI Assistant Endpoint
 app.post('/api/chat', async (req, res) => {
   try {
-    const { userPrompt, farmerContext } = req.body;
+    const { userPrompt, lat, lng, targetLanguage, farmerContext } = req.body;
 
     const systemInstruction = `
-    You are an AI Agricultural Advisor for the Krishak Unnayan Portal.
+    You are an AI Agricultural & Procurement Advisor for the Krishak Unnayan Portal.
     Provide precise, actionable farming advice, market insights, and weather recommendations.
-    Current Farmer Profile:
+
+    Location Context: Lat ${lat || 29.6857}, Lng ${lng || 76.9905}
+    Farmer Profile:
     - Name: ${farmerContext?.name || 'Ramesh Kumar'}
     - Location: ${farmerContext?.location || 'Karnal, Haryana'}
     - Active Token: ${farmerContext?.token || 'T-104'}
-    - Primary Crops: Wheat, Paddy
+    - Primary Crops: ${farmerContext?.primaryCrops || 'Wheat, Paddy'}
+
+    CRITICAL INSTRUCTION: Respond entirely in the target language code: "${targetLanguage || 'en'}".
+    If targetLanguage is 'hi', respond in Hindi. If 'pa', respond in Punjabi. If 'en', respond in English.
+    Always mirror the language used by the user if they speak directly in a specific native dialect.
     Answer concisely in simple terms.
     `;
 
-    // Access Gemini Model
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
       systemInstruction: systemInstruction,
@@ -53,7 +58,7 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Create Payment Order Endpoint (₹30 Subscription / Payments)
+// ------------------------------------------------------------------ Payment Endpoint
 app.post('/api/create-payment-order', async (req, res) => {
   try {
     const { amount = 30, currency = 'INR' } = req.body;
@@ -72,7 +77,7 @@ app.post('/api/create-payment-order', async (req, res) => {
   }
 });
 
-// Simulated Nearby Mandi Live Price API
+// ------------------------------------------------------------------ Mandi Data Endpoint
 app.get('/api/mandis', (req, res) => {
   res.json([
     { id: 1, name: "Mandi Sector 4, Karnal", distance: "2.4 km", pricePerQuintal: 2275, lat: 29.6857, lng: 76.9905 },
