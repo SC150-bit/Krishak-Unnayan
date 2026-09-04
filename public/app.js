@@ -5,6 +5,17 @@ const state = {
   coords: { lat: 29.6857, lng: 76.9905 }, // default: Karnal, Haryana
   map: null,
   markers: [],
+  currentLang: 'en', // default language
+};
+
+// State-to-Language Mapping Table
+const REGIONAL_LANGUAGES = {
+  'Haryana': 'hi',       // Hindi
+  'Punjab': 'pa',        // Punjabi
+  'West Bengal': 'bn',   // Bengali
+  'Maharashtra': 'mr',   // Marathi
+  'Gujarat': 'gu',       // Gujarati
+  'Tamil Nadu': 'ta'     // Tamil
 };
 
 // ------------------------------------------------------------------ helpers
@@ -33,11 +44,13 @@ function initials(name) {
 
 // ------------------------------------------------------------------ auth modal
 const authBackdrop = document.getElementById('authBackdrop');
-document.querySelectorAll('[data-open-auth]').forEach((btn) => {
-  btn.addEventListener('click', () => openAuth(btn.dataset.openAuth));
-});
-document.getElementById('authClose').addEventListener('click', closeAuth);
-authBackdrop.addEventListener('click', (e) => { if (e.target === authBackdrop) closeAuth(); });
+if (authBackdrop) {
+  document.querySelectorAll('[data-open-auth]').forEach((btn) => {
+    btn.addEventListener('click', () => openAuth(btn.dataset.openAuth));
+  });
+  document.getElementById('authClose').addEventListener('click', closeAuth);
+  authBackdrop.addEventListener('click', (e) => { if (e.target === authBackdrop) closeAuth(); });
+}
 
 function openAuth(tab) {
   authBackdrop.classList.remove('hidden');
@@ -53,7 +66,7 @@ function switchTab(tab) {
 }
 document.querySelectorAll('.modal__tab').forEach((t) => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
   const errEl = document.getElementById('loginError');
@@ -67,7 +80,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   }
 });
 
-document.getElementById('signupForm').addEventListener('submit', async (e) => {
+document.getElementById('signupForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = new FormData(e.target);
   const errEl = document.getElementById('signupError');
@@ -97,7 +110,7 @@ function onAuthed({ token, user }) {
   renderAuthedUI();
 }
 
-document.getElementById('signOutBtn').addEventListener('click', () => {
+document.getElementById('signOutBtn')?.addEventListener('click', () => {
   state.token = null;
   state.user = null;
   localStorage.removeItem('ku_token');
@@ -181,21 +194,47 @@ async function loadMandiDropdown() {
   }
 }
 
-document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+document.getElementById('bookingForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const resultEl = document.getElementById('bookingResult');
-  resultEl.classList.add('hidden');
+  
+  // Show Verification Modal before proceeding with booking
+  openVerificationModal();
+});
 
-  const payload = {
-    mandiId: document.getElementById('bookMandi').value,
-    date: document.getElementById('bookDate').value,
-    timeSlot: document.getElementById('bookSlot').value,
-    crop: document.getElementById('bookCrop').value,
-    quantityQuintals: document.getElementById('bookQty').value,
-  };
+// Verification Modal Flow
+function openVerificationModal() {
+  const modal = document.getElementById('verificationModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+  document.getElementById('verificationModal').classList.add('hidden');
+});
+
+document.getElementById('verifyBtn')?.addEventListener('click', async () => {
+  const idInput = document.getElementById('idInput').value.trim();
+  if (idInput.length !== 12 || isNaN(idInput)) {
+    alert('Please enter a valid 12-digit ID number.');
+    return;
+  }
 
   try {
+    // Proceed with booking call once ID format is validated
+    const resultEl = document.getElementById('bookingResult');
+    resultEl.classList.add('hidden');
+
+    const payload = {
+      mandiId: document.getElementById('bookMandi').value,
+      date: document.getElementById('bookDate').value,
+      timeSlot: document.getElementById('bookSlot').value,
+      crop: document.getElementById('bookCrop').value,
+      quantityQuintals: document.getElementById('bookQty').value,
+      identityNumber: idInput
+    };
+
     const data = await api('/api/bookings/book', { method: 'POST', body: payload });
+    
+    document.getElementById('verificationModal').classList.add('hidden');
     resultEl.classList.remove('hidden');
     resultEl.className = 'booking-result booking-result--success';
     resultEl.innerHTML = `
@@ -205,19 +244,16 @@ document.getElementById('bookingForm').addEventListener('submit', async (e) => {
       <p><strong>Date & Slot:</strong> ${data.booking.date} | ${data.booking.timeSlot}</p>
     `;
 
-    // Switch over to Queue Tracker
     setTimeout(() => {
       document.querySelector('[data-panel="queue-tracker"]').click();
     }, 1800);
   } catch (err) {
-    resultEl.classList.remove('hidden');
-    resultEl.className = 'booking-result booking-result--error';
-    resultEl.textContent = err.message;
+    alert('Verification/Booking Error: ' + err.message);
   }
 });
 
 // ------------------------------------------------------------------ Live Queue Management
-document.getElementById('refreshQueueBtn').addEventListener('click', loadQueueStatus);
+document.getElementById('refreshQueueBtn')?.addEventListener('click', loadQueueStatus);
 
 async function loadQueueStatus() {
   const container = document.getElementById('queueList');
@@ -373,23 +409,55 @@ async function loadBestMarkets() {
   }
 }
 
-// ------------------------------------------------------------------ AI chat
-// ------------------------------------------------------------------ AI chat
+// ------------------------------------------------------------------ AI chat & Speech Recognition
 const chatWindow = document.getElementById('chatWindow');
+const micBtn = document.getElementById('micBtn');
+const chatInput = document.getElementById('chatInput');
+const langToggleBtn = document.getElementById('langToggleBtn');
+
+// Language Toggle Control
+langToggleBtn?.addEventListener('click', () => {
+  const userState = state.user?.location?.split(',')[1]?.trim() || 'Haryana';
+  const localLang = REGIONAL_LANGUAGES[userState] || 'hi';
+  
+  state.currentLang = state.currentLang === 'en' ? localLang : 'en';
+  langToggleBtn.textContent = state.currentLang === 'en' ? 'En ⇄ Regional' : `Lang: ${state.currentLang.toUpperCase()}`;
+});
+
+// Web Speech API Integration
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition && micBtn) {
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  micBtn.addEventListener('click', () => {
+    recognition.lang = state.currentLang === 'hi' ? 'hi-IN' : 'en-US';
+    recognition.start();
+    micBtn.classList.add('listening');
+  });
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    chatInput.value = transcript;
+    micBtn.classList.remove('listening');
+    document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+  };
+
+  recognition.onerror = () => {
+    micBtn.classList.remove('listening');
+  };
+} else if (micBtn) {
+  micBtn.style.display = 'none';
+}
 
 function formatAIResponse(text) {
   if (!text) return '';
   return text
-    // Remove all '#' symbols anywhere in the string
     .replace(/#/g, '')
-    
-    // Convert markdown bold (**word**) to HTML bold (<b>word</b>)
     .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-    
-    // Add clean line breaks before numbered points or inline headings
     .replace(/(\d+\.\s+)/g, '<br><br>$1')
-    
-    // Clean up double line breaks at the start
     .replace(/^(<br>)+/, '');
 }
 
@@ -398,10 +466,8 @@ function addMsg(text, who) {
   div.className = `chat-msg chat-msg--${who}`;
   
   if (who === 'ai') {
-    // Render formatted HTML for AI messages
     div.innerHTML = formatAIResponse(text);
   } else {
-    // Render plain text for user messages
     div.textContent = text;
   }
 
@@ -409,13 +475,13 @@ function addMsg(text, who) {
   chatWindow.scrollTop = chatWindow.scrollHeight;
 }
 
-document.getElementById('chatForm').addEventListener('submit', async (e) => {
+document.getElementById('chatForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
   if (!text) return;
 
-  if (!state.user.isSubscribed) {
+  if (!state.user?.isSubscribed) {
     addMsg("The AI advisor is part of Krishak Plus — upgrade from the sidebar to start chatting.", 'ai');
     input.value = '';
     return;
@@ -427,7 +493,12 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
   try {
     const { reply } = await api('/api/chat', {
       method: 'POST',
-      body: { userPrompt: text, lat: state.coords.lat, lng: state.coords.lng },
+      body: { 
+        userPrompt: text, 
+        lat: state.coords.lat, 
+        lng: state.coords.lng,
+        targetLanguage: state.currentLang 
+      },
     });
     addMsg(reply, 'ai');
   } catch (err) {
@@ -436,7 +507,7 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
 });
 
 // ------------------------------------------------------------------ Razorpay subscription
-document.getElementById('upgradeBtn').addEventListener('click', async () => {
+document.getElementById('upgradeBtn')?.addEventListener('click', async () => {
   try {
     const data = await api('/api/payments/create-order', { method: 'POST' });
     if (!data || !data.order) throw new Error(data.error || 'Failed to create payment order.');
