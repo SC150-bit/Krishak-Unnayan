@@ -395,6 +395,30 @@ document.getElementById('chatForm').addEventListener('submit', async (e) => {
     return;
   }
 
+  // Function to clean markdown headers and render formatted responses
+function formatAIResponse(text) {
+  // Removes #, ##, ### headers and cleans leading whitespace
+  let cleanText = text.replace(/^#+\s*/gm, '');
+
+  // Convert line breaks to HTML breaks for proper layout
+  return cleanText.replace(/\n/g, '<br>');
+}
+
+// Example usage when displaying AI response in UI
+async function fetchAIResponse(userQuery) {
+  const response = await fetch('/api/ai-chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: userQuery })
+  });
+  
+  const data = await response.json();
+  
+  // Render clean text inside your chat container element
+  const chatBox = document.getElementById('chat-output');
+  chatBox.innerHTML = formatAIResponse(data.reply);
+}
+
   addMsg(text, 'user');
   input.value = '';
   try {
