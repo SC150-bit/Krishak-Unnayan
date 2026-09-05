@@ -1,388 +1,262 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Krishak Unnayan | Zero-Wait Mandi Procurement & Smart Queueing</title>
-  
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Leaflet Maps CSS & JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- Razorpay SDK -->
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Krishak Unnayan — Sell where it earns the most</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <!-- Top Navigation Bar -->
-  <header class="navbar">
-    <div class="nav-container">
-      <div class="brand">
-        <span class="brand-icon">🍃</span>
-        <span class="brand-title">Krishak Unnayan</span>
-      </div>
-      <nav class="nav-links">
-        <a href="#how-it-works">How it works</a>
-        <a href="#features">Features</a>
-        <a href="#pricing">Pricing</a>
-      </nav>
-      <div class="auth-buttons">
-        <!-- Logged Out State -->
-        <div id="loggedOutNav" class="nav-auth-group">
-          <button class="btn btn-outline" id="signInBtn">Sign in</button>
-          <button class="btn btn-dark" id="getStartedBtn">Get started</button>
-        </div>
-        <!-- Logged In State -->
-        <div id="loggedInNav" class="nav-auth-group hidden">
-          <span class="user-pill" id="userNamePill">Shreyash Chanda</span>
-          <button class="btn btn-outline" id="signOutBtn">Sign out</button>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- Public Landing Page Section -->
-  <div id="landingView">
-    <section class="hero-section">
-      <div class="hero-content">
-        <h1 class="serif-title">Zero-Wait Mandi Procurement & Smart Queueing.</h1>
-        <p class="hero-subtitle">
-          Book procurement slots in advance, avoid long mandi waiting times, track your queue status live, and find the highest paying market for your crop today.
-        </p>
-        <div class="hero-actions">
-          <button class="btn btn-dark btn-lg" id="bookSlotFreeBtn">Book Slot Free</button>
-          <a href="#how-it-works" class="link-action">See how it works &darr;</a>
-        </div>
-        
-        <div class="stats-row">
-          <div class="stat-item">
-            <span class="stat-number">6</span>
-            <span class="stat-label">mandis tracked</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">0 Min</span>
-            <span class="stat-label">queue waiting with token</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">2 min</span>
-            <span class="stat-label">to book a slot</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="hero-graphic">
-        <div class="graphic-circle">
-          <div class="plant-symbol">Y</div>
-          <div class="sun-symbol"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Three Steps Section -->
-    <section id="how-it-works" class="info-section">
-      <h2 class="serif-subtitle">Three steps to fast procurement</h2>
-      <div class="card-grid-3">
-        <div class="info-card">
-          <span class="card-step-num">1</span>
-          <h3>Select Mandi & Book Slot</h3>
-          <p>Choose your nearest procurement center, preferred date, time slot, and estimated crop volume.</p>
-        </div>
-        <div class="info-card">
-          <span class="card-step-num">2</span>
-          <h3>Get Digital Token</h3>
-          <p>Receive a digital queue token with estimated time to arrive at the procurement gate.</p>
-        </div>
-        <div class="info-card">
-          <span class="card-step-num">3</span>
-          <h3>Live Queue Updates & SMS</h3>
-          <p>Track current serving tokens in real-time and receive SMS notifications before your turn.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="info-section">
-      <h2 class="serif-subtitle">Smart Procurement Solution</h2>
-      <div class="card-grid-4">
-        <div class="info-card">
-          <h3>Slot Booking System</h3>
-          <p>Eliminate random queueing by pre-booking scheduled procurement dates and times.</p>
-        </div>
-        <div class="info-card">
-          <h3>Real-Time Queue Tracking</h3>
-          <p>Check live serving tokens and estimated remaining waiting times from your phone.</p>
-        </div>
-        <div class="info-card">
-          <h3>SMS & App Alerts</h3>
-          <p>Get automated notification triggers when your token number is 15 minutes away.</p>
-        </div>
-        <div class="info-card">
-          <h3>AI Assistant & Price Board</h3>
-          <p>Inquire about crop schedules and find net returns across neighboring markets.</p>
-        </div>
-      </div>
-    </section>
-
-    <footer class="footer-bar">
+<header class="topbar">
+  <div class="topbar__inner">
+    <a class="brand" href="#/">
+      <svg class="brand__mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 4C20 4 9 10 9 21C9 27.6274 13.9249 33 20 33C26.0751 33 31 27.6274 31 21C31 10 20 4 20 4Z" fill="#1F4D2C"/>
+        <path d="M20 33V37" stroke="#1F4D2C" stroke-width="2" stroke-linecap="round"/>
+        <path d="M20 12C20 12 14 15.5 14 21C14 24.3137 16.6863 27 20 27" stroke="#D98C2B" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
       <span>Krishak Unnayan</span>
-      <span>Department of Consumer Affairs (DoCA) Procurement Automation Portal.</span>
-    </footer>
-  </div>
-
-  <!-- Authenticated User Dashboard -->
-  <div id="dashboardView" class="hidden">
-    <div class="dashboard-container">
-      
-      <!-- Left Sidebar -->
-      <aside class="sidebar">
-        <!-- User Badge Card -->
-        <div class="profile-card">
-          <div class="badge-tag">Krishak Plus</div>
-          <div class="profile-info">
-            <div class="avatar-circle" id="userAvatar">SC</div>
-            <div class="user-details">
-              <h3 id="sidebarUserName">Shreyash Chanda</h3>
-              <p id="sidebarUserMeta">Karnal, Haryana &middot; Wheat</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Navigation Tabs -->
-        <nav class="sidebar-menu">
-          <button class="menu-item active" data-tab="tab-book-slot">Book Slot</button>
-          <button class="menu-item" data-tab="tab-live-queue">Live Queue Status</button>
-          <button class="menu-item" data-tab="tab-best-markets">Best Markets</button>
-          <button class="menu-item" data-tab="tab-ai-assistant">AI Assistant</button>
-        </nav>
-      </aside>
-
-      <!-- Main Panel View Container -->
-      <main class="main-content">
-        
-        <!-- Panel 1: Book Slot -->
-        <div id="tab-book-slot" class="panel active">
-          <h2 class="serif-title">Procurement Slot Booking</h2>
-          <p class="panel-sub">Schedule your crop delivery in advance to avoid long gate queues.</p>
-
-          <form id="bookingForm" class="form-grid">
-            <div class="form-group">
-              <label>Select Mandi Center</label>
-              <select id="mandiSelect" class="form-control">
-                <option value="Mandi Sector 4, Karnal">Mandi Sector 4, Karnal (&x20B9;2275/qtl)</option>
-                <option value="Taraori Mandi">Taraori Mandi (&x20B9;2340/qtl)</option>
-                <option value="Gharaunda Grain Market">Gharaunda Grain Market (&x20B9;2310/qtl)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Delivery Date</label>
-              <input type="date" id="deliveryDate" class="form-control" value="2026-09-02" />
-            </div>
-
-            <div class="form-group">
-              <label>Time Slot</label>
-              <select id="timeSlot" class="form-control">
-                <option value="08:00 AM - 10:00 AM">08:00 AM - 10:00 AM</option>
-                <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
-                <option value="01:00 PM - 03:00 PM">01:00 PM - 03:00 PM</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>Crop Type</label>
-              <input type="text" id="cropType" class="form-control" value="Wheat" readonly />
-            </div>
-
-            <div class="form-group full-width">
-              <label>Estimated Quantity (Quintals)</label>
-              <input type="number" id="cropQty" class="form-control" placeholder="e.g. 50" />
-            </div>
-
-            <div class="form-group full-width">
-              <button type="submit" class="btn btn-dark btn-block">Confirm Slot Booking</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Panel 2: Live Queue Status -->
-        <div id="tab-live-queue" class="panel">
-          <div class="panel-header-row">
-            <div>
-              <h2 class="serif-title">Live Mandi Queue & Token Tracking</h2>
-              <p class="panel-sub">Track live procurement gate status and estimated entry time.</p>
-            </div>
-            <button class="btn btn-outline" id="refreshQueueBtn">Refresh Live Queue</button>
-          </div>
-
-          <div class="token-status-card">
-            <div class="token-card-top">
-              <div class="token-id-group">
-                <span class="token-badge green">TOK-MANDI-101</span>
-                <span class="status-pill">WAITING</span>
-              </div>
-              <div class="booked-date">Booked on 3/9/2026</div>
-            </div>
-
-            <div class="token-card-details">
-              <div><strong>Mandi:</strong> Mandi Sector 4, Karnal</div>
-              <div><strong>Scheduled Slot:</strong> 2026-09-02<br>(08:00 AM - 10:00 AM)</div>
-              <div><strong>Crop Details:</strong> 50 Quintals of Wheat</div>
-            </div>
-
-            <div class="token-metrics-box">
-              <div class="metric">
-                <span class="metric-label">CURRENTLY SERVING GATE TOKEN</span>
-                <span class="metric-value serif">TOK-MANDI-12</span>
-              </div>
-              <div class="metric">
-                <span class="metric-label">VEHICLES AHEAD</span>
-                <span class="metric-value bold">89</span>
-              </div>
-              <div class="metric">
-                <span class="metric-label">EST. WAIT TIME</span>
-                <span class="metric-value serif highlight">~1068 mins</span>
-              </div>
-            </div>
-
-            <div class="token-card-actions">
-              <button class="btn btn-outline btn-sm">Simulate SMS Notification</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel 3: Best Markets -->
-        <div id="tab-best-markets" class="panel">
-          <div class="panel-header-row">
-            <h2 class="serif-title">Best Markets for Your Harvest</h2>
-            <button class="btn btn-outline" id="useLocationBtn">Use My Location</button>
-          </div>
-
-          <div class="markets-grid">
-            <div id="mapContainer" class="map-box"></div>
-            <div class="market-cards-list">
-              <div class="market-card">
-                <div class="market-card-number">1</div>
-                <div class="market-card-content">
-                  <h4>Taraori Mandi</h4>
-                  <p class="muted">14.4 km away &middot; &#8377;2340/quintal</p>
-                </div>
-                <div class="market-card-price">&#8377;2311 net / quintal</div>
-              </div>
-
-              <div class="market-card">
-                <div class="market-card-number">2</div>
-                <div class="market-card-content">
-                  <h4>Gharaunda Grain Market</h4>
-                  <p class="muted">16.4 km away &middot; &#8377;2310/quintal</p>
-                </div>
-                <div class="market-card-price">&#8377;2277 net / quintal</div>
-              </div>
-
-              <div class="market-card">
-                <div class="market-card-number">3</div>
-                <div class="market-card-content">
-                  <h4>Mandi Sector 4, Karnal</h4>
-                  <p class="muted">0 km away &middot; &#8377;2275/quintal</p>
-                </div>
-                <div class="market-card-price">&#8377;2275 net / quintal</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel 4: AI Assistant -->
-        <div id="tab-ai-assistant" class="panel">
-          <h2 class="serif-title">AI Agricultural & Procurement Advisor</h2>
-          
-          <div class="chat-container">
-            <div class="chat-logs" id="chatLogs">
-              <div class="chat-message bot">
-                <p>Hello <span id="chatUserSalutation">Sanveer</span> ji. To get the highest profit for your wheat crop right now, here is your direct action plan:</p>
-                <br>
-                <p><strong>1. Where to Sell: Taraori Mandi</strong> Even after accounting for transport costs, <strong>Taraori Mandi gives you the highest net profit.</strong> * <strong>Taraori Mandi (14.4 km):</strong> Price &#8377;2,340/qtl | Net Return: ~&#8377;2,311/qtl *(BEST CHOICE)* * <strong>Gharaunda Grain Market (16.4 km):</strong> Price &#8377;2,310/qtl | Net Return: ~&#8377;2,277/qtl * <strong>Mandi Sector 4, Karnal (0 km):</strong> Price &#8377;2,275/qtl | Net Return: ~&#8377;2,275/qtl *Selling 50 quintals at Taraori Mandi will earn you around &#8377;1,800 more compared to your local Karnal market.* --</p>
-                <br>
-                <p><strong>2. Action Steps to Protect Your Profit:</strong> * <strong>Check Moisture Content:</strong> Ensure wheat moisture is <strong>below 12%</strong> and clean out chaff before loading. Dry grain prevents price cuts by buyers. * <strong>Book Your Procurement Slot:</strong> Book an early slot to lock in entry.</p>
-              </div>
-            </div>
-
-            <form id="chatForm" class="chat-input-bar">
-              <input type="text" id="chatInput" placeholder="Ask about procurement rules, timing, or crop quality..." />
-              <button type="submit" class="btn btn-dark">Send</button>
-            </form>
-          </div>
-        </div>
-
-      </main>
+    </a>
+    <nav class="topbar__nav" id="topNav">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+    <div class="topbar__actions" id="authActions">
+      <button class="btn btn--ghost" data-open-auth="login">Sign in</button>
+      <button class="btn btn--primary" data-open-auth="signup">Get started</button>
+    </div>
+    <div class="topbar__actions topbar__actions--user hidden" id="userActions">
+      <span class="user-chip" id="userChip"></span>
+      <button class="btn btn--ghost" id="signOutBtn">Sign out</button>
     </div>
   </div>
+</header>
 
-  <script>
-    // Tab Navigation Logic
-    const tabs = document.querySelectorAll('.sidebar-menu .menu-item');
-    const panels = document.querySelectorAll('.main-content .panel');
+<main id="landing">
+  <section class="hero">
+    <div class="hero__copy">
+      <h1>Sell your harvest where it earns the most.</h1>
+      <p class="hero__sub">Krishak Unnayan checks the mandis around you and points you to the three that pay the most for your crop today — plus an AI advisor that knows your farm and answers in plain language.</p>
+      <div class="hero__cta">
+        <button class="btn btn--primary btn--lg" data-open-auth="signup">Get started free</button>
+        <a class="btn btn--text" href="#how">See how it works ↓</a>
+      </div>
+      <dl class="hero__stats">
+        <div><dt>6</dt><dd>mandis tracked near Karnal</dd></div>
+        <div><dt>₹30</dt><dd>per month for full access</dd></div>
+        <div><dt>2 min</dt><dd>to set up your profile</dd></div>
+      </dl>
+    </div>
+    <div class="hero__art" aria-hidden="true">
+      <svg viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="240" cy="240" r="230" fill="#F0F6EC"/>
+        <g stroke="#3F7D48" stroke-width="6" stroke-linecap="round">
+          <path d="M120 340 L120 200"/>
+          <path d="M120 200 L100 170"/>
+          <path d="M120 200 L140 170"/>
+          <path d="M120 250 L96 220"/>
+          <path d="M120 250 L144 220"/>
+          <path d="M120 300 L96 270"/>
+          <path d="M120 300 L144 270"/>
+        </g>
+        <g stroke="#1F4D2C" stroke-width="6" stroke-linecap="round">
+          <path d="M200 360 L200 160"/>
+          <path d="M200 160 L176 128"/>
+          <path d="M200 160 L224 128"/>
+          <path d="M200 215 L172 178"/>
+          <path d="M200 215 L228 178"/>
+          <path d="M200 270 L172 233"/>
+          <path d="M200 270 L228 233"/>
+          <path d="M200 325 L172 288"/>
+          <path d="M200 325 L228 288"/>
+        </g>
+        <g stroke="#3F7D48" stroke-width="6" stroke-linecap="round">
+          <path d="M280 350 L280 190"/>
+          <path d="M280 190 L258 160"/>
+          <path d="M280 190 L302 160"/>
+          <path d="M280 245 L254 210"/>
+          <path d="M280 245 L306 210"/>
+          <path d="M280 300 L254 265"/>
+          <path d="M280 300 L306 265"/>
+        </g>
+        <path d="M60 360 Q240 320 420 360" stroke="#1F4D2C" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <circle cx="360" cy="120" r="34" fill="#D98C2B"/>
+        <g stroke="#D98C2B" stroke-width="5" stroke-linecap="round">
+          <path d="M360 66 L360 50"/>
+          <path d="M405 90 L418 78"/>
+          <path d="M405 150 L418 162"/>
+        </g>
+      </svg>
+    </div>
+  </section>
 
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        panels.forEach(p => p.classList.remove('active'));
+  <section class="how" id="how">
+    <h2>Three steps from field to fair price</h2>
+    <ol class="steps">
+      <li>
+        <span class="steps__num">1</span>
+        <h3>Create your profile</h3>
+        <p>Tell us your name, village or town, and the crops you grow. It takes under two minutes.</p>
+      </li>
+      <li>
+        <span class="steps__num">2</span>
+        <h3>Get matched to the best mandi</h3>
+        <p>We weigh today's price against distance, so you see real earnings, not just the highest sticker price.</p>
+      </li>
+      <li>
+        <span class="steps__num">3</span>
+        <h3>Ask your AI advisor anytime</h3>
+        <p>Get a straight answer on when to sell, what to expect at the mandi, and how to plan the season ahead.</p>
+      </li>
+    </ol>
+  </section>
 
-        tab.classList.add('active');
-        const targetPanel = document.getElementById(tab.dataset.tab);
-        if (targetPanel) targetPanel.classList.add('active');
+  <section class="features" id="features">
+    <h2>Everything you need before you load the truck</h2>
+    <div class="feature-grid">
+      <article class="feature-card">
+        <h3>Best market finder</h3>
+        <p>See the three mandis near you ranked by what you'll actually take home after transport, not just the headline price.</p>
+      </article>
+      <article class="feature-card">
+        <h3>AI farming advisor</h3>
+        <p>Ask about pest pressure, sowing windows, or where to sell — it already knows your crop and location.</p>
+      </article>
+      <article class="feature-card">
+        <h3>Live mandi price board</h3>
+        <p>A running list of nearby markets and today's rate per quintal, free for anyone with an account.</p>
+      </article>
+      <article class="feature-card">
+        <h3>Built for slow connections</h3>
+        <p>Light pages and simple screens, so it works as well on a village signal as it does in town.</p>
+      </article>
+    </div>
+  </section>
 
-        if (tab.dataset.tab === 'tab-best-markets' && !window.mapInitialized) {
-          initMap();
-        }
-      });
-    });
+  <section class="pricing" id="pricing">
+    <div class="pricing__card">
+      <div>
+        <h2>Krishak Plus</h2>
+        <p>Unlock the AI advisor and the best-market finder for the price of a cup of tea.</p>
+        <ul class="pricing__list">
+          <li>Ranked best-3-mandi finder, updated with your location</li>
+          <li>Unlimited questions to your AI farming advisor</li>
+          <li>Full mandi price history for your crops</li>
+        </ul>
+      </div>
+      <div class="pricing__amount">
+        <span class="pricing__price">₹30<small>/month</small></span>
+        <button class="btn btn--primary btn--lg" data-open-auth="signup">Get started</button>
+      </div>
+    </div>
+  </section>
+</main>
 
-    // Auth toggle simulation
-    const signInBtn = document.getElementById('signInBtn');
-    const getStartedBtn = document.getElementById('getStartedBtn');
-    const signOutBtn = document.getElementById('signOutBtn');
-    const landingView = document.getElementById('landingView');
-    const dashboardView = document.getElementById('dashboardView');
-    const loggedOutNav = document.getElementById('loggedOutNav');
-    const loggedInNav = document.getElementById('loggedInNav');
+<main id="dashboard" class="dashboard hidden">
+  <div class="dashboard__grid">
+    <aside class="dashboard__side">
+      <div class="profile-card">
+        <div class="profile-card__avatar" id="avatarInitial"></div>
+        <div>
+          <h3 id="profileName"></h3>
+          <p id="profileMeta"></p>
+        </div>
+        <span class="badge" id="subBadge"></span>
+      </div>
 
-    function loginUser() {
-      landingView.classList.add('hidden');
-      dashboardView.classList.remove('hidden');
-      loggedOutNav.classList.add('hidden');
-      loggedInNav.classList.remove('hidden');
-    }
+      <div class="paywall-card hidden" id="paywallCard">
+        <h4>Unlock Krishak Plus</h4>
+        <p>Get the AI advisor and the best-market finder for ₹30/month.</p>
+        <button class="btn btn--primary" id="upgradeBtn">Upgrade for ₹30</button>
+      </div>
 
-    function logoutUser() {
-      landingView.classList.remove('hidden');
-      dashboardView.classList.add('hidden');
-      loggedOutNav.classList.remove('hidden');
-      loggedInNav.classList.add('hidden');
-    }
+      <nav class="dash-nav">
+        <button class="dash-nav__item is-active" data-panel="markets">Best markets</button>
+        <button class="dash-nav__item" data-panel="assistant">AI assistant</button>
+        <button class="dash-nav__item" data-panel="board">Price board</button>
+      </nav>
+    </aside>
 
-    if (signInBtn) signInBtn.addEventListener('click', loginUser);
-    if (getStartedBtn) getStartedBtn.addEventListener('click', loginUser);
-    if (signOutBtn) signOutBtn.addEventListener('click', logoutUser);
+    <section class="dashboard__main">
 
-    // Leaflet Map Initialization
-    function initMap() {
-      window.mapInitialized = true;
-      const map = L.map('mapContainer').setView([29.6857, 76.9905], 11);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
+      <div class="panel" id="panel-markets">
+        <div class="panel__header">
+          <h2>Best markets for your harvest</h2>
+          <button class="btn btn--ghost btn--sm" id="locateBtn">Use my location</button>
+        </div>
+        <p class="muted" id="marketsHint">We rank mandis by price minus estimated transport, so the top result is what actually earns you the most.</p>
+        <div class="markets-layout">
+          <div id="map" class="map"></div>
+          <ol class="market-list" id="marketList"></ol>
+        </div>
+      </div>
 
-      // Add Mandi Markers
-      L.marker([29.8000, 76.9200]).addTo(map).bindPopup('Taraori Mandi').openPopup();
-      L.marker([29.5400, 76.9700]).addTo(map).bindPopup('Gharaunda Grain Market');
-      L.marker([29.6857, 76.9905]).addTo(map).bindPopup('Mandi Sector 4, Karnal');
-    }
-  </script>
+      <div class="panel hidden" id="panel-assistant">
+        <div class="panel__header">
+          <h2>AI farming advisor</h2>
+        </div>
+        <p class="muted">Knows your crop, your location, and today's nearby mandi prices.</p>
+        <div class="chat" id="chatWindow"></div>
+        <form class="chat-form" id="chatForm">
+          <input type="text" id="chatInput" placeholder="Ask about prices, timing, or your crop…" autocomplete="off" />
+          <button class="btn btn--primary" type="submit">Send</button>
+        </form>
+      </div>
+
+      <div class="panel hidden" id="panel-board">
+        <div class="panel__header">
+          <h2>Nearby mandi price board</h2>
+        </div>
+        <table class="price-table">
+          <thead><tr><th>Market</th><th>Price / quintal</th></tr></thead>
+          <tbody id="priceTableBody"></tbody>
+        </table>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <span>Krishak Unnayan</span>
+  <span class="muted">Built for farmers. Prices shown are indicative — always confirm at the mandi.</span>
+</footer>
+
+<div class="modal-backdrop hidden" id="authBackdrop">
+  <div class="modal">
+    <button class="modal__close" id="authClose" aria-label="Close">×</button>
+    <div class="modal__tabs">
+      <button class="modal__tab is-active" data-tab="login">Sign in</button>
+      <button class="modal__tab" data-tab="signup">Create account</button>
+    </div>
+
+    <form id="loginForm" class="modal__form">
+      <label>Email<input type="email" name="email" required /></label>
+      <label>Password<input type="password" name="password" required /></label>
+      <p class="form-error" id="loginError"></p>
+      <button class="btn btn--primary btn--lg" type="submit">Sign in</button>
+    </form>
+
+    <form id="signupForm" class="modal__form hidden">
+      <label>Full name<input type="text" name="name" required /></label>
+      <label>Email<input type="email" name="email" required /></label>
+      <label>Password<input type="password" name="password" minlength="6" required /></label>
+      <label>Village / town<input type="text" name="location" placeholder="e.g. Karnal, Haryana" /></label>
+      <label>Primary crops<input type="text" name="primaryCrops" placeholder="e.g. Wheat, Paddy" /></label>
+      <p class="form-error" id="signupError"></p>
+      <button class="btn btn--primary btn--lg" type="submit">Create account</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
