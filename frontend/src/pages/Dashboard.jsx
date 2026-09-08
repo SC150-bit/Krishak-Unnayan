@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { key: "ai", label: "aiAssistant", icon: "🤖" },
 ];
 
-function BookSlotPanel({ user }) {
+function BookSlotPanel({ user, booking, onBook }) {
   const [form, setForm] = useState({
     mandi: "Mandi Sector 4, Karnal (₹2275/qtl)",
     date: new Date().toISOString().slice(0, 10),
@@ -23,6 +23,22 @@ function BookSlotPanel({ user }) {
     quantity: "",
   });
   const [confirmed, setConfirmed] = useState(false);
+
+  function handleConfirm() {
+    // Simulated gate-token allocation — wire this to a real queue-management backend in production.
+    const tokenNumber = 90 + Math.floor(Math.random() * 60);
+    onBook({
+      tokenId: `TOK-MANDI-${tokenNumber}`,
+      tokenNumber,
+      mandi: form.mandi.replace(/\s*\(₹[\d,]+\/qtl\)\s*$/, ""),
+      date: form.date,
+      timeSlot: form.timeSlot,
+      crop: form.crop,
+      quantity: form.quantity || "—",
+      bookedOn: new Date().toLocaleDateString("en-IN"),
+    });
+    setConfirmed(true);
+  }
 
   return (
     <div className="card max-w-2xl">
@@ -77,34 +93,153 @@ function BookSlotPanel({ user }) {
         onChange={(e) => setForm({ ...form, quantity: e.target.value })}
       />
 
-      <button onClick={() => setConfirmed(true)} className="btn-primary w-full">
+      <button onClick={handleConfirm} className="btn-primary w-full">
         Confirm Slot Booking
       </button>
 
-      {confirmed && (
+      {confirmed && booking && (
         <p className="mt-4 text-sm text-brand-700 bg-brand-50 rounded-xl px-4 py-3">
-          ✅ Slot confirmed at <b>{form.mandi}</b> on {form.date}, {form.timeSlot}. You'll get an SMS token 15
-          minutes before your turn.
+          ✅ Slot confirmed at <b>{booking.mandi}</b> on {booking.date}, {booking.timeSlot}. Your gate token is{" "}
+          <b>{booking.tokenId}</b> — track it live under "Live Queue Status".
         </p>
       )}
     </div>
   );
 }
 
-function LiveQueuePanel() {
-  // Simulated live token — wire this to a real queue-management backend in production.
-  const [token, setToken] = useState(42);
+function LiveQueuePanel({ booking, onGoToBook }) {
+  // Simulated gate queue movement — wire this up to a real queue-management backend in production.
+  const [servingNumber, setServingNumber] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [smsSent, setSmsSent] = useState(false);
+
   useEffect(() => {
-    const id = setInterval(() => setToken((t) => t + (Math.random() > 0.6 ? 1 : 0)), 4000);
+    if (!booking) return;
+    // Start the "currently serving" token comfortably behind the user's own token.
+    const vehiclesAheadStart = Math.min(booking.tokenNumber - 1, 60 + Math.floor(Math.random() * 40));
+    setServingNumber(Math.max(1, booking.tokenNumber - vehiclesAheadStart - 1));
+  }, [booking?.tokenId]);
+
+  useEffect(() => {
+    if (!booking) return;
+    const id = setInterval(() => {
+      setServingNumber((n) => {
+        if (n === null) return n;
+        if (n >= booking.tokenNumber) return n;
+        return n + (Math.random() > 0.55 ? 1 : 0);
+      });
+    }, 4000);
     return () => clearInterval(id);
-  }, []);
+  }, [booking?.tokenId]);
+
+  if (!booking) {
+    return (
+      <div className="card max-w-xl text-center">
+        <h2 className="font-display text-xl font-bold text-brand-800 mb-2">Live Mandi Queue &amp; Token Tracking</h2>
+        <p className="text-sm text-brand-500 mb-6">You don't have an active gate token yet.</p>
+        <button onClick={onGoToBook} className="btn-primary">
+          Book a Procurement Slot
+        </button>
+      </div>
+    );
+  }
+
+  const vehiclesAhead = Math.max(0, booking.tokenNumber - servingNumber - 1);
+  const estWaitMins = vehiclesAhead * 12;
+  const status = servingNumber >= booking.tokenNumber ? "READY TO ENTER" : vehiclesAhead <= 3 ? "CALLED SOON" : "WAITING";
+  const statusClasses =
+    status === "READY TO ENTER"
+      ? "bg-amber-100 text-amber-700"
+      : status === "CALLED SOON"
+      ? "bg-brand-100 text-brand-700"
+      : "bg-brand-50 text-brand-600";
+
+  function handleRefresh() {
+    setRefreshing(true);
+    setTimeout(() => {
+      setServingNumber((n) => Math.min(booking.tokenNumber, (n ?? 0) + Math.floor(Math.random() * 3)));
+      setRefreshing(false);
+    }, 500);
+  }
+
+  function handleSimulateSms() {
+    setSmsSent(true);
+    setTimeout(() => setSmsSent(false), 5000);
+  }
 
   return (
-    <div className="card max-w-md text-center">
-      <h2 className="font-display text-xl font-bold text-brand-800 mb-4">Live Queue Status</h2>
-      <p className="text-sm text-brand-500 mb-2">Now serving token</p>
-      <p className="text-6xl font-bold text-brand-700 font-display">{token}</p>
-      <p className="text-sm text-brand-500 mt-4">Your token: <b>#57</b> · Estimated wait: ~12 min</p>
+    <div className="max-w-3xl">
+      <div className="flex items-start justify-between gap-4 mb-1">
+        <h2 className="font-display text-xl font-bold text-brand-800">Live Mandi Queue &amp; Token Tracking</h2>
+        <button onClick={handleRefresh} className="btn-secondary text-sm shrink-0" disabled={refreshing}>
+          {refreshing ? "Refreshing…" : "Refresh Live Queue"}
+        </button>
+      </div>
+      <p className="text-sm text-brand-500 mb-6">Track live procurement gate status and estimated entry time.</p>
+
+      <div className="card !p-0 overflow-hidden">
+        <div className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-3">
+              <span className="bg-brand-800 text-white font-display font-bold text-sm px-4 py-2 rounded-xl">
+                {booking.tokenId}
+              </span>
+              <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusClasses}`}>{status}</span>
+            </div>
+            <span className="text-xs text-brand-400">Booked on {booking.bookedOn}</span>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-4 text-sm mb-6">
+            <div>
+              <span className="font-semibold text-brand-800">Mandi: </span>
+              <span className="text-brand-600">{booking.mandi}</span>
+            </div>
+            <div>
+              <span className="font-semibold text-brand-800">Scheduled Slot: </span>
+              <span className="text-brand-600">
+                {booking.date} ({booking.timeSlot})
+              </span>
+            </div>
+            <div>
+              <span className="font-semibold text-brand-800">Crop Details: </span>
+              <span className="text-brand-600">
+                {booking.quantity} Quintals of {booking.crop}
+              </span>
+            </div>
+          </div>
+
+          <div className="border border-brand-100 rounded-xl p-4 grid sm:grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs font-semibold text-brand-500 uppercase tracking-wide mb-1">
+                Currently Serving Gate Token
+              </p>
+              <p className="font-display font-bold text-brand-800">TOK-MANDI-{servingNumber}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-brand-500 uppercase tracking-wide mb-1">Vehicles Ahead</p>
+              <p className="font-display font-bold text-brand-800">{vehiclesAhead}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-brand-500 uppercase tracking-wide mb-1">Est. Wait Time</p>
+              <p className="font-display font-bold text-brand-800">
+                {vehiclesAhead === 0 ? "Ready now" : `~${estWaitMins} mins`}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end mt-4">
+            <button onClick={handleSimulateSms} className="btn-secondary text-sm">
+              Simulate SMS Notification
+            </button>
+          </div>
+
+          {smsSent && (
+            <p className="mt-4 text-sm text-brand-700 bg-brand-50 rounded-xl px-4 py-3">
+              📩 SMS sent: "Your token {booking.tokenId} is {vehiclesAhead === 0 ? "ready to enter now" : `~${vehiclesAhead} vehicles away, est. ${estWaitMins} mins`}."
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -116,6 +251,7 @@ export default function Dashboard() {
   const [showAadhaar, setShowAadhaar] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [premiumFeature, setPremiumFeature] = useState("");
+  const [booking, setBooking] = useState(null);
 
   function goPremium(featureLabel, key) {
     if (isPremium) {
@@ -197,8 +333,8 @@ export default function Dashboard() {
       </aside>
 
       <main>
-        {active === "book" && <BookSlotPanel user={user} />}
-        {active === "queue" && <LiveQueuePanel />}
+        {active === "book" && <BookSlotPanel user={user} booking={booking} onBook={setBooking} />}
+        {active === "queue" && <LiveQueuePanel booking={booking} onGoToBook={() => setActive("book")} />}
         {active === "markets" && isPremium && <MapDashboard cropName={user?.primaryCrop || "Wheat"} />}
         {active === "ai" && isPremium && (
           <ChatAssistant cropName={user?.primaryCrop || "Wheat"} position={user?.location} />
