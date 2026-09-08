@@ -4,6 +4,8 @@ import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import path from "path";
+import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
 
 import authRoutes from "./routes/auth.routes.js";
@@ -12,12 +14,21 @@ import marketRoutes from "./routes/market.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
 import subscriptionRoutes from "./routes/subscription.routes.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
-app.use(helmet());
+// Adjust helmet content security policy so static frontend assets render properly
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    origin: process.env.CLIENT_ORIGIN || "*",
     credentials: true,
   })
 );
@@ -35,8 +46,7 @@ app.use(
   })
 );
 
-// Tighter limits on the routes most worth protecting: auth (credential
-// stuffing / OTP spam) and the AI chat endpoint (LLM cost control).
+// Tighter limits on auth and AI endpoints
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
 const aiLimiter = rateLimit({ windowMs: 60 * 1000, max: 15, standardHeaders: true, legacyHeaders: false });
 
@@ -48,7 +58,19 @@ app.use("/api/markets", marketRoutes);
 app.use("/api/ai", aiLimiter, aiRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 
-// 404
+// --- FRONTEND STATIC ASSETS & SPA ROUTING ---
+const frontendBuildPath = path.join(__dirname, "../../frontend/dist");
+app.use(express.static(frontendBuildPath));
+
+// SPA fallback for non-API web routes
+app.get("*", (req, res, next) => {
+  if (req.originalUrl.startsWith("/api")) {
+    return next();
+  }
+  res.sendFile(path.join(frontendBuildPath, "index.html"));
+});
+
+// 404 for unmatched API routes
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));
 
 // Error handler
