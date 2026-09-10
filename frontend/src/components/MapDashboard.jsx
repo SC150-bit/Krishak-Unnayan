@@ -58,34 +58,43 @@ function RecenterMap({ lat, lng }) {
   return null;
 }
 
-function MapDashboardContent({ cropName = "Wheat" }) {
+function MapDashboardContent({ cropName = "Rice", position: propPosition }) {
   const { t } = useLanguage();
-  const [position, setPosition] = useState(null);
+  const [position, setPosition] = useState(propPosition || null);
   const [markets, setMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Determine initial coordinates from props or Geolocation API
   useEffect(() => {
+    if (propPosition?.lat && propPosition?.lng) {
+      setPosition(propPosition);
+      return;
+    }
+
     let isMounted = true;
+    const defaultCoords = { lat: 22.5726, lng: 88.3639 }; // Kolkata coordinates
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           if (isMounted) setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         },
         () => {
-          if (isMounted) setPosition({ lat: 22.5726, lng: 88.3639 });
+          if (isMounted) setPosition(defaultCoords);
         },
-        { timeout: 10000 }
+        { timeout: 5000 }
       );
     } else {
-      setPosition({ lat: 22.5726, lng: 88.3639 });
+      setPosition(defaultCoords);
     }
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [propPosition]);
 
+  // Fetch market data when position or selected crop changes
   useEffect(() => {
     if (!position?.lat || !position?.lng) return;
     setLoading(true);
@@ -94,8 +103,10 @@ function MapDashboardContent({ cropName = "Wheat" }) {
     api
       .getNearestBest(position.lat, position.lng, cropName)
       .then((data) => {
-        if (data && Array.isArray(data.markets)) {
+        if (data && Array.isArray(data.markets) && data.markets.length > 0) {
           setMarkets(data.markets);
+        } else if (data && Array.isArray(data) && data.length > 0) {
+          setMarkets(data);
         } else {
           setMarkets([]);
         }
@@ -118,7 +129,9 @@ function MapDashboardContent({ cropName = "Wheat" }) {
   return (
     <div className="card overflow-hidden !p-0 border border-brand-100 rounded-2xl bg-white">
       <div className="p-5 border-b border-brand-100 flex items-center justify-between">
-        <h3 className="font-display font-bold text-brand-800">{t.nearestMarkets || "Nearest Best-Price Markets"}</h3>
+        <h3 className="font-display font-bold text-brand-800">
+          {t.nearestMarkets || "Nearest Best-Price Markets"} ({cropName})
+        </h3>
         {loading && <span className="text-xs text-brand-400 animate-pulse">Refreshing…</span>}
       </div>
 
@@ -171,7 +184,9 @@ function MapDashboardContent({ cropName = "Wheat" }) {
           </div>
         ))}
         {!loading && validMarkets.length === 0 && !error && (
-          <div className="p-4 text-xs text-brand-500 text-center">No market data available for this area.</div>
+          <div className="p-4 text-xs text-brand-500 text-center">
+            No market data available for {cropName} near this location.
+          </div>
         )}
       </div>
     </div>
