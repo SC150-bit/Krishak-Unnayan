@@ -4,10 +4,9 @@ const BASE_URL = 'https://api.data.gov.in/resource/';
 
 // Comprehensive seed list for spatial features & offline fallbacks
 const SEED_MANDIS = [
-  { mandiName: "Taraori Mandi", market: "Taraori", state: "Haryana", district: "Karnal", lat: 29.7167, lng: 76.8333 },
-  { mandiName: "Mandi Sector 4, Karnal", market: "Karnal", state: "Haryana", district: "Karnal", lat: 29.6857, lng: 76.9905 },
-  { mandiName: "Gharaunda Mandi", market: "Gharaunda", state: "Haryana", district: "Karnal", lat: 29.5461, lng: 76.9694 },
-  { mandiName: "Azadpur Mandi", market: "Azadpur", state: "Delhi", district: "North Delhi", lat: 28.7069, lng: 77.1746 },
+  { mandiName: "Bankura Sadar APMC", market: "Bankura", state: "West Bengal", district: "Bankura", lat: 23.2324, lng: 87.0715 },
+  { mandiName: "Rampurhat APMC", market: "Rampurhat", state: "West Bengal", district: "Birbhum", lat: 24.1670, lng: 87.7786 },
+  { mandiName: "Jalpaiguri Sadar APMC", market: "Jalpaiguri", state: "West Bengal", district: "Jalpaiguri", lat: 26.5405, lng: 88.7194 },
   { mandiName: "Burdwan Mandi", market: "Burdwan", state: "West Bengal", district: "Purba Bardhaman", lat: 23.2324, lng: 87.8615 },
 ];
 
