@@ -255,7 +255,25 @@ export default function Dashboard() {
   const [showAadhaar, setShowAadhaar] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [premiumFeature, setPremiumFeature] = useState("");
-  const [booking, setBooking] = useState(null);
+
+  // Persistent Booking State from localStorage
+  const [booking, setBooking] = useState(() => {
+    try {
+      const savedBooking = localStorage.getItem("mandi_booking");
+      return savedBooking ? JSON.parse(savedBooking) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const handleSetBooking = (newBooking) => {
+    setBooking(newBooking);
+    if (newBooking) {
+      localStorage.setItem("mandi_booking", JSON.stringify(newBooking));
+    } else {
+      localStorage.removeItem("mandi_booking");
+    }
+  };
 
   // Dynamic Crop State: Syncs with user primary crop, defaults to Rice
   const [selectedCrop, setSelectedCrop] = useState("Rice");
@@ -301,11 +319,11 @@ export default function Dashboard() {
 
           {!user?.aadhaarVerified && (
             <button onClick={() => setShowAadhaar(true)} className="btn-secondary w-full mt-4 text-sm">
-              Verify Aadhaar (KYC)
+              Verify Identity (KYC)
             </button>
           )}
           {user?.aadhaarVerified && (
-            <p className="text-xs text-brand-500 mt-3">✅ Aadhaar verified · {user.aadhaarNumberMasked}</p>
+            <p className="text-xs text-brand-500 mt-3">✅ Identity verified · {user.aadhaarNumberMasked}</p>
           )}
         </div>
 
@@ -361,7 +379,7 @@ export default function Dashboard() {
       </aside>
 
       <main>
-        {active === "book" && <BookSlotPanel user={user} booking={booking} onBook={setBooking} />}
+        {active === "book" && <BookSlotPanel user={user} booking={booking} onBook={handleSetBooking} />}
         {active === "queue" && <LiveQueuePanel booking={booking} onGoToBook={() => setActive("book")} />}
         {active === "markets" && isPremium && (
           <MapDashboard cropName={selectedCrop} position={user?.location} />
