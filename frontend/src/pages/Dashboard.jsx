@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 
 function BookSlotPanel({ user, booking, onBook }) {
   const [form, setForm] = useState({
-    mandi: "Mandi Sector 4, Karnal (₹2275/qtl)",
+    mandi: "Burdwan APMC, Purba Bardhaman (₹3300/qtl)",
     date: new Date().toISOString().slice(0, 10),
     timeSlot: "08:00 AM - 10:00 AM",
     crop: user?.primaryCrop || "Wheat",
