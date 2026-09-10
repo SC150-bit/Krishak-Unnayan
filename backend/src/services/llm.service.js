@@ -56,7 +56,7 @@ async function callGoogle({ apiKey, model, messages, context }) {
       contents,
       config: {
         systemInstruction,
-        maxOutputTokens: 600,
+        maxOutputTokens: 1500,
         temperature: 0.3, // Lower temperature for more factual responses
       },
       requestOptions: {
