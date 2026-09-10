@@ -53,9 +53,9 @@ function BookSlotPanel({ user, booking, onBook }) {
             value={form.mandi}
             onChange={(e) => setForm({ ...form, mandi: e.target.value })}
           >
-            <option>Mandi Sector 4, Karnal (₹2275/qtl)</option>
-            <option>Taraori Mandi (₹2311/qtl)</option>
-            <option>Gharaunda Mandi (₹2190/qtl)</option>
+            <option>Burdwan APMC, Purba Bardhaman (₹3300/qtl)</option>
+            <option>Bankura Sadar APMC, Bankura (₹3200/qtl)</option>
+            <option>Rampurhat APMC, Birbhum (₹2190/qtl)</option>
           </select>
         </div>
         <div>
