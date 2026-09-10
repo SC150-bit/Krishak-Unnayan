@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, Component } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { api } from "../services/api";
@@ -25,67 +25,125 @@ const mandiIcon = new L.DivIcon({
   iconAnchor: [13, 26],
 });
 
+class MapErrorBoundary extends Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("Map Error Boundary caught an issue:", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 text-center text-red-600 bg-red-50 rounded-xl">
+          Unable to render interactive map. Please refresh the page.
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function RecenterMap({ lat, lng }) {
   const map = useMap();
   useEffect(() => {
-    if (lat && lng) map.setView([lat, lng], 10);
+    if (typeof lat === "number" && typeof lng === "number") {
+      map.setView([lat, lng], 10);
+    }
   }, [lat, lng, map]);
   return null;
 }
 
-export default function MapDashboard({ cropName = "Wheat" }) {
+function MapDashboardContent({ cropName = "Wheat" }) {
   const { t } = useLanguage();
-  const [position, setPosition] = useState(null); // { lat, lng }
+  const [position, setPosition] = useState(null);
   const [markets, setMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setPosition({ lat: 29.6857, lng: 76.9905 }) // fallback: Karnal, Haryana
-    );
+    let isMounted = true;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (isMounted) setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {
+          if (isMounted) setPosition({ lat: 22.5726, lng: 88.3639 });
+        },
+        { timeout: 10000 }
+      );
+    } else {
+      setPosition({ lat: 22.5726, lng: 88.3639 });
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (!position) return;
+    if (!position?.lat || !position?.lng) return;
     setLoading(true);
+    setError("");
+
     api
       .getNearestBest(position.lat, position.lng, cropName)
-      .then((data) => setMarkets(data.markets))
-      .catch((err) => setError(err.message))
+      .then((data) => {
+        if (data && Array.isArray(data.markets)) {
+          setMarkets(data.markets);
+        } else {
+          setMarkets([]);
+        }
+      })
+      .catch((err) => {
+        setError(err.message || "Failed to fetch nearby markets.");
+        setMarkets([]);
+      })
       .finally(() => setLoading(false));
   }, [position, cropName]);
 
-  if (!position) return <div className="card">Locating you…</div>;
+  if (!position) {
+    return <div className="card p-6 text-brand-700">Locating you…</div>;
+  }
+
+  const validMarkets = Array.isArray(markets)
+    ? markets.filter((m) => m && typeof m.lat === "number" && typeof m.lng === "number")
+    : [];
 
   return (
-    <div className="card overflow-hidden !p-0">
+    <div className="card overflow-hidden !p-0 border border-brand-100 rounded-2xl bg-white">
       <div className="p-5 border-b border-brand-100 flex items-center justify-between">
-        <h3 className="font-display font-bold text-brand-800">{t.nearestMarkets}</h3>
-        {loading && <span className="text-xs text-brand-400">Refreshing…</span>}
+        <h3 className="font-display font-bold text-brand-800">{t.nearestMarkets || "Nearest Best-Price Markets"}</h3>
+        {loading && <span className="text-xs text-brand-400 animate-pulse">Refreshing…</span>}
       </div>
 
-      {error && <p className="p-5 text-sm text-red-600">{error}</p>}
+      {error && <p className="p-4 text-sm text-red-600 bg-red-50">{error}</p>}
 
-      <div className="h-80 w-full">
+      <div className="h-80 w-full relative z-0">
         <MapContainer center={[position.lat, position.lng]} zoom={10} style={{ height: "100%", width: "100%" }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <RecenterMap lat={position.lat} lng={position.lng} />
+
           <Marker position={[position.lat, position.lng]} icon={userIcon}>
             <Popup>You are here</Popup>
           </Marker>
-          {markets.map((m) => (
-            <Marker key={m.mandiName} position={[m.lat, m.lng]} icon={mandiIcon}>
+
+          {validMarkets.map((m, idx) => (
+            <Marker key={m.mandiName ? `${m.mandiName}-${idx}` : idx} position={[m.lat, m.lng]} icon={mandiIcon}>
               <Popup>
-                <b>{m.mandiName}</b>
+                <b>{m.mandiName || "Mandi"}</b>
                 <br />
-                ₹{m.pricePerQuintal}/quintal
+                ₹{m.pricePerQuintal ?? "N/A"}/quintal
                 <br />
-                {t.netProfit}: ₹{m.netProfitPerQuintal}/quintal
+                {t.netProfit || "Net Profit"}: ₹{m.netProfitPerQuintal ?? "N/A"}/quintal
               </Popup>
             </Marker>
           ))}
@@ -93,26 +151,37 @@ export default function MapDashboard({ cropName = "Wheat" }) {
       </div>
 
       <div className="divide-y divide-brand-50">
-        {markets.map((m, i) => (
-          <div key={m.mandiName} className="p-4 flex items-center justify-between">
+        {validMarkets.map((m, i) => (
+          <div key={m.mandiName ? `${m.mandiName}-${i}` : i} className="p-4 flex items-center justify-between">
             <div>
               <p className="font-semibold text-brand-800">
                 {i === 0 && "🏆 "}
-                {m.mandiName}
+                {m.mandiName || "Unknown Mandi"}
               </p>
               <p className="text-xs text-brand-500">
-                {m.district}, {m.state} · {t.distance}: {m.distanceKm ?? "—"} km
+                {m.district || ""}{m.district && m.state ? ", " : ""}{m.state || ""} · {t.distance || "Distance"}: {m.distanceKm ?? "—"} km
               </p>
             </div>
             <div className="text-right">
-              <p className="font-bold text-brand-700">₹{m.pricePerQuintal}/qtl</p>
+              <p className="font-bold text-brand-700">₹{m.pricePerQuintal ?? "—"}/qtl</p>
               <p className="text-xs text-brand-500">
-                {t.netProfit}: ₹{m.netProfitPerQuintal}
+                {t.netProfit || "Net Profit"}: ₹{m.netProfitPerQuintal ?? "—"}
               </p>
             </div>
           </div>
         ))}
+        {!loading && validMarkets.length === 0 && !error && (
+          <div className="p-4 text-xs text-brand-500 text-center">No market data available for this area.</div>
+        )}
       </div>
     </div>
+  );
+}
+
+export default function MapDashboard(props) {
+  return (
+    <MapErrorBoundary>
+      <MapDashboardContent {...props} />
+    </MapErrorBoundary>
   );
 }
