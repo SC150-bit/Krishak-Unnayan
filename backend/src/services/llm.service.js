@@ -37,7 +37,7 @@ function formatMessagesForGemini(messages) {
 
 async function callGoogle({ apiKey, model, messages, context }) {
   const ai = new GoogleGenAI({ apiKey });
-  const selectedModel = model || "gemini-2.5-flash";
+  const selectedModel = model || "gemini-3.6-flash";
 
   // Combine system instructions with contextual user details
   const systemInstruction = context
