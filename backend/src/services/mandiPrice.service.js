@@ -12,8 +12,8 @@ const SEED_MANDIS = [
 ];
 
 const CROP_BASE_PRICE = {
-  Wheat: 2250,
-  Rice: 2100,
+  Wheat: 3250,
+  Rice: 3000,
   Paddy: 2050,
   Mustard: 5400,
 };
