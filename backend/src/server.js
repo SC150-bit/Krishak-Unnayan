@@ -19,6 +19,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Trust reverse proxy (required for Render / express-rate-limit to get the correct client IP)
+app.set("trust proxy", 1);
+
 // Adjust helmet content security policy so static frontend assets render properly
 app.use(
   helmet({
