@@ -25,7 +25,6 @@ function BookSlotPanel({ user, booking, onBook }) {
   const [confirmed, setConfirmed] = useState(false);
 
   function handleConfirm() {
-    // Simulated gate-token allocation — wire this to a real queue-management backend in production.
     const tokenNumber = 90 + Math.floor(Math.random() * 60);
     onBook({
       tokenId: `TOK-MANDI-${tokenNumber}`,
@@ -81,7 +80,14 @@ function BookSlotPanel({ user, booking, onBook }) {
         </div>
         <div>
           <label className="text-sm font-medium text-brand-700 block mb-1">Crop Type</label>
-          <input className="input-field" value={form.crop} onChange={(e) => setForm({ ...form, crop: e.target.value })} />
+          <select
+            className="input-field"
+            value={form.crop}
+            onChange={(e) => setForm({ ...form, crop: e.target.value })}
+          >
+            <option value="Rice">Rice</option>
+            <option value="Wheat">Wheat</option>
+          </select>
         </div>
       </div>
 
@@ -108,14 +114,12 @@ function BookSlotPanel({ user, booking, onBook }) {
 }
 
 function LiveQueuePanel({ booking, onGoToBook }) {
-  // Simulated gate queue movement — wire this up to a real queue-management backend in production.
   const [servingNumber, setServingNumber] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [smsSent, setSmsSent] = useState(false);
 
   useEffect(() => {
     if (!booking) return;
-    // Start the "currently serving" token comfortably behind the user's own token.
     const vehiclesAheadStart = Math.min(booking.tokenNumber - 1, 60 + Math.floor(Math.random() * 40));
     setServingNumber(Math.max(1, booking.tokenNumber - vehiclesAheadStart - 1));
   }, [booking?.tokenId]);
@@ -253,6 +257,15 @@ export default function Dashboard() {
   const [premiumFeature, setPremiumFeature] = useState("");
   const [booking, setBooking] = useState(null);
 
+  // Dynamic Crop State: Syncs with user primary crop, defaults to Rice
+  const [selectedCrop, setSelectedCrop] = useState("Rice");
+
+  useEffect(() => {
+    if (user?.primaryCrop) {
+      setSelectedCrop(user.primaryCrop);
+    }
+  }, [user?.primaryCrop]);
+
   function goPremium(featureLabel, key) {
     if (isPremium) {
       setActive(key);
@@ -274,7 +287,7 @@ export default function Dashboard() {
               <p className="font-display font-bold text-brand-800">{user?.name}</p>
               <p className="text-xs text-brand-500">
                 {user?.city ? `${user.city}, ` : ""}
-                {user?.state} · {user?.primaryCrop}
+                {user?.state} · {selectedCrop}
               </p>
             </div>
           </div>
@@ -294,6 +307,21 @@ export default function Dashboard() {
           {user?.aadhaarVerified && (
             <p className="text-xs text-brand-500 mt-3">✅ Aadhaar verified · {user.aadhaarNumberMasked}</p>
           )}
+        </div>
+
+        {/* Global Crop Selector */}
+        <div className="card !p-4">
+          <label className="text-xs font-semibold text-brand-700 block mb-2 uppercase tracking-wider">
+            Active Crop Filter
+          </label>
+          <select
+            className="input-field text-sm"
+            value={selectedCrop}
+            onChange={(e) => setSelectedCrop(e.target.value)}
+          >
+            <option value="Rice">🌾 Rice</option>
+            <option value="Wheat">🌾 Wheat</option>
+          </select>
         </div>
 
         {!isPremium && (
@@ -335,9 +363,11 @@ export default function Dashboard() {
       <main>
         {active === "book" && <BookSlotPanel user={user} booking={booking} onBook={setBooking} />}
         {active === "queue" && <LiveQueuePanel booking={booking} onGoToBook={() => setActive("book")} />}
-        {active === "markets" && isPremium && <MapDashboard cropName={user?.primaryCrop || "Wheat"} />}
+        {active === "markets" && isPremium && (
+          <MapDashboard cropName={selectedCrop} position={user?.location} />
+        )}
         {active === "ai" && isPremium && (
-          <ChatAssistant cropName={user?.primaryCrop || "Wheat"} position={user?.location} />
+          <ChatAssistant cropName={selectedCrop} position={user?.location} />
         )}
       </main>
 
