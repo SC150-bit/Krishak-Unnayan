@@ -94,28 +94,42 @@ function MapDashboardContent({ cropName = "Rice", position: propPosition }) {
     };
   }, [propPosition]);
 
-  // Fetch market data when position or selected crop changes
+  // Fetch market data with automatic regional fallback
   useEffect(() => {
     if (!position?.lat || !position?.lng) return;
     setLoading(true);
     setError("");
 
-    api
-      .getNearestBest(position.lat, position.lng, cropName)
-      .then((data) => {
-        if (data && Array.isArray(data.markets) && data.markets.length > 0) {
-          setMarkets(data.markets);
-        } else if (data && Array.isArray(data) && data.length > 0) {
-          setMarkets(data);
+    const fetchMarketsWithFallback = async (lat, lng, isRetry = false) => {
+      try {
+        const data = await api.getNearestBest(lat, lng, cropName);
+        const marketList = Array.isArray(data?.markets)
+          ? data.markets
+          : Array.isArray(data)
+          ? data
+          : [];
+
+        if (marketList.length > 0) {
+          setMarkets(marketList);
+        } else if (!isRetry) {
+          // Fallback to central West Bengal procurement hub (Purba Bardhaman) if user location has 0 data
+          fetchMarketsWithFallback(23.2324, 87.8615, true);
         } else {
           setMarkets([]);
         }
-      })
-      .catch((err) => {
-        setError(err.message || "Failed to fetch nearby markets.");
-        setMarkets([]);
-      })
-      .finally(() => setLoading(false));
+      } catch (err) {
+        if (!isRetry) {
+          fetchMarketsWithFallback(23.2324, 87.8615, true);
+        } else {
+          setError(err.message || "Failed to fetch nearby markets.");
+          setMarkets([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMarketsWithFallback(position.lat, position.lng);
   }, [position, cropName]);
 
   if (!position) {
