@@ -19,7 +19,7 @@ function BookSlotPanel({ user, booking, onBook }) {
     mandi: "Burdwan APMC, Purba Bardhaman (₹3300/qtl)",
     date: new Date().toISOString().slice(0, 10),
     timeSlot: "08:00 AM - 10:00 AM",
-    crop: user?.primaryCrop || "Wheat",
+    crop: user?.primaryCrop || "Rice",
     quantity: "",
   });
   const [confirmed, setConfirmed] = useState(false);
